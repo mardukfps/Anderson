@@ -47,13 +47,15 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-8">
       {/* Type Selector */}
-      <div className="flex bg-gray-100 p-1 rounded-2xl">
+      <div className="flex bg-gray-100 dark:bg-dark-card p-1 rounded-2xl border dark:border-white/5 transition-colors">
         <button
           type="button"
           onClick={() => setType(EntryType.PONTO)}
           className={cn(
             "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
-            type === EntryType.PONTO ? "bg-white shadow-md text-[#141414]" : "text-gray-500"
+            type === EntryType.PONTO 
+              ? "bg-white dark:bg-white text-[#141414] dark:text-black shadow-md" 
+              : "text-gray-500 dark:text-gray-400"
           )}
         >
           Ponto Eletrônico
@@ -63,7 +65,9 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
           onClick={() => setType(EntryType.CARTAO)}
           className={cn(
             "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
-            type === EntryType.CARTAO ? "bg-white shadow-md text-[#141414]" : "text-gray-500"
+            type === EntryType.CARTAO 
+              ? "bg-white dark:bg-white text-[#141414] dark:text-black shadow-md" 
+              : "text-gray-500 dark:text-gray-400"
           )}
         >
           Cartão Manual
@@ -80,7 +84,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
             type="date" 
             value={date} 
             onChange={(e) => setDate(e.target.value)}
-            className="w-full bg-white border border-gray-100 p-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#141414]/10 transition-all outline-none font-medium"
+            className="w-full bg-white dark:bg-dark-card border border-gray-100 dark:border-white/5 p-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#141414]/10 dark:focus:ring-white/10 transition-all outline-none font-medium dark:text-white"
             required
           />
         </div>
@@ -95,19 +99,19 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
               type="time" 
               value={entryTime} 
               onChange={(e) => setEntryTime(e.target.value)}
-              className="w-full bg-white border border-gray-100 p-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#141414]/10 transition-all outline-none font-mono text-lg"
+              className="w-full bg-white dark:bg-dark-card border border-gray-100 dark:border-white/5 p-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#141414]/10 dark:focus:ring-white/10 transition-all outline-none font-mono text-lg dark:text-white"
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
               <Clock className="w-3 h-3 text-orange-500" /> Saída
             </label>
             <input 
               type="time" 
               value={exitTime} 
               onChange={(e) => setExitTime(e.target.value)}
-              className="w-full bg-white border border-gray-100 p-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#141414]/10 transition-all outline-none font-mono text-lg"
+              className="w-full bg-white dark:bg-dark-card border border-gray-100 dark:border-white/5 p-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#141414]/10 dark:focus:ring-white/10 transition-all outline-none font-mono text-lg dark:text-white"
               required
             />
           </div>
@@ -124,7 +128,9 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
               onClick={() => setPercentage(0.5)}
               className={cn(
                 "p-4 rounded-2xl border transition-all flex flex-col items-center gap-1",
-                percentage === 0.5 ? "border-[#141414] bg-[#141414] text-white" : "border-gray-100 bg-white text-gray-500"
+                percentage === 0.5 
+                  ? "border-[#141414] dark:border-white bg-[#141414] dark:bg-white text-white dark:text-black" 
+                  : "border-gray-100 dark:border-white/5 bg-white dark:bg-dark-card text-gray-500 dark:text-gray-400"
               )}
             >
               <span className="text-xl font-bold">50%</span>
@@ -135,7 +141,9 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
               onClick={() => setPercentage(1.0)}
               className={cn(
                 "p-4 rounded-2xl border transition-all flex flex-col items-center gap-1",
-                percentage === 1.0 ? "border-[#141414] bg-[#141414] text-white" : "border-gray-100 bg-white text-gray-500"
+                percentage === 1.0 
+                  ? "border-[#141414] dark:border-white bg-[#141414] dark:bg-white text-white dark:text-black" 
+                  : "border-gray-100 dark:border-white/5 bg-white dark:bg-dark-card text-gray-500 dark:text-gray-400"
               )}
             >
               <span className="text-xl font-bold">100%</span>
@@ -146,7 +154,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
       </div>
 
       {/* Summary Card */}
-      <div className="bg-[#141414] text-white p-6 rounded-3xl space-y-4 shadow-xl">
+      <div className="bg-[#141414] dark:bg-dark-card text-white p-6 rounded-3xl space-y-4 shadow-xl border dark:border-white/5">
         <div className="flex justify-between items-center border-b border-white/10 pb-4">
           <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Resumo do Lançamento</span>
           <Tag className="w-4 h-4 text-white/40" />
@@ -168,7 +176,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 bg-white text-[#141414] py-5 rounded-2xl font-bold uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all border border-gray-100"
+            className="flex-1 bg-white dark:bg-dark-card text-[#141414] dark:text-white py-5 rounded-2xl font-bold uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all border border-gray-100 dark:border-white/5"
           >
             Cancelar
           </button>
@@ -176,10 +184,10 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-[2] bg-[#141414] text-white py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-3"
+          className="flex-[2] bg-[#141414] dark:bg-white text-white dark:text-black py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-3"
         >
           <PlusCircle className="w-6 h-6" />
-          {initialEntry ? 'Salvar Edição' : 'Confirmar Registro'}
+          {initialEntry ? 'Salvar Edição' : 'Confirmar'}
         </button>
       </div>
     </form>

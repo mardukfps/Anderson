@@ -40,7 +40,7 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-3xl font-bold tracking-tight"
+          className="text-3xl font-bold tracking-tight dark:text-white"
         >
           Painel GERAL
         </motion.h1>
@@ -59,7 +59,7 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-[#141414] text-white rounded-3xl p-6 shadow-xl relative overflow-hidden"
+        className="bg-[#141414] dark:bg-dark-card text-white dark:text-gray-100 rounded-3xl p-6 shadow-xl relative overflow-hidden transition-colors border dark:border-white/5"
       >
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-8">
@@ -144,11 +144,11 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
 
       {/* Configuration Alert */}
       {settings.baseHourlyRate === 0 && (
-        <div className="bg-blue-50 border border-blue-100 p-5 rounded-3xl flex gap-3 items-center">
-          <Wallet className="w-6 h-6 text-blue-500" />
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 p-5 rounded-3xl flex gap-3 items-center">
+          <Wallet className="w-6 h-6 text-blue-500 dark:text-blue-400" />
           <div className="flex-1">
-            <div className="text-xs font-bold text-blue-900 uppercase">Configuração Pendente</div>
-            <p className="text-[10px] text-blue-600 font-medium">Defina o valor da sua hora base nos Ajustes para calcular o saldo financeiro.</p>
+            <div className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase">Configuração Pendente</div>
+            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Defina o valor da sua hora base nos Ajustes para calcular o saldo financeiro.</p>
           </div>
           <motion.div 
             animate={{ x: [0, 5, 0] }} 
@@ -162,11 +162,11 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
 
       {/* Info Alert */}
       {stats.totalHours >= settings.monthlyLimit && (
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex gap-3 items-start animate-pulse">
-          <TrendingUp className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 p-4 rounded-2xl flex gap-3 items-start animate-pulse">
+          <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
-            <div className="text-sm font-bold text-amber-900 uppercase tracking-tight">Limite Atingido</div>
-            <p className="text-xs text-amber-700 font-medium">Você ultrapassou sua meta mensal de {settings.monthlyLimit} horas.</p>
+            <div className="text-sm font-bold text-amber-900 dark:text-amber-300 uppercase tracking-tight">Limite Atingido</div>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Você ultrapassou sua meta mensal de {settings.monthlyLimit} horas.</p>
           </div>
         </div>
       )}
@@ -176,13 +176,13 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
 
 function StatCard({ icon, label, value, bgColor }: { icon: React.ReactNode, label: string, value: string, bgColor: string }) {
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
-      <div className={cn(bgColor, "w-10 h-10 rounded-xl flex items-center justify-center")}>
+    <div className="bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 transition-colors">
+      <div className={cn(bgColor, "w-10 h-10 rounded-xl flex items-center justify-center dark:bg-white/10")}>
         {icon}
       </div>
       <div>
-        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">{label}</span>
-        <div className="text-xl font-bold tracking-tight">{value}</div>
+        <span className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-wider">{label}</span>
+        <div className="text-xl font-bold tracking-tight dark:text-white">{value}</div>
       </div>
     </div>
   );

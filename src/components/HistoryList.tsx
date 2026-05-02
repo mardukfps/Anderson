@@ -45,11 +45,11 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center py-20 text-center gap-4"
       >
-        <div className="bg-gray-100 p-8 rounded-full mb-2">
-          <Clock className="w-12 h-12 text-gray-300" />
+        <div className="bg-gray-100 dark:bg-white/5 p-8 rounded-full mb-2">
+          <Clock className="w-12 h-12 text-gray-300 dark:text-gray-700" />
         </div>
-        <h3 className="text-xl font-bold text-gray-400">Nenhum registro ainda</h3>
-        <p className="text-sm text-gray-400 max-w-[200px]">Comece adicionando suas horas extras no botão central.</p>
+        <h3 className="text-xl font-bold text-gray-400 dark:text-gray-500">Nenhum registro ainda</h3>
+        <p className="text-sm text-gray-400 dark:text-gray-600 max-w-[200px]">Comece adicionando suas horas extras no botão central.</p>
       </motion.div>
     );
   }
@@ -66,12 +66,14 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
-              showFilters || hasActiveFilters ? "bg-[#141414] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              showFilters || hasActiveFilters 
+                ? "bg-[#141414] dark:bg-white text-white dark:text-black" 
+                : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
             )}
           >
             <Filter className="w-3 h-3" />
             Filtros
-            {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+            {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />}
           </button>
         </div>
 
@@ -83,10 +85,10 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4 mt-1">
+              <div className="p-4 bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm space-y-4 mt-1">
                 {/* Type Filter */}
                 <div className="space-y-2">
-                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tipo de Lançamento</label>
+                  <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Tipo de Lançamento</label>
                   <div className="flex gap-2">
                     {(['ALL', EntryType.PONTO, EntryType.CARTAO] as const).map((type) => (
                       <button
@@ -95,8 +97,8 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                         className={cn(
                           "flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all",
                           filterType === type 
-                            ? "bg-[#141414] text-white border-[#141414]" 
-                            : "bg-white text-gray-400 border-gray-100 hover:border-gray-200"
+                            ? "bg-[#141414] dark:bg-white text-white dark:text-black border-[#141414] dark:border-white" 
+                            : "bg-white dark:bg-transparent text-gray-400 border-gray-100 dark:border-white/10 hover:border-gray-200 dark:hover:border-white/20"
                         )}
                       >
                         {type === 'ALL' ? 'Todos' : type === EntryType.PONTO ? 'Ponto' : 'Cartão'}
@@ -107,7 +109,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
 
                 {/* Date Filter */}
                 <div className="space-y-2">
-                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Período</label>
+                  <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Período</label>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -115,7 +117,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                         type="date" 
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-transparent rounded-xl text-[10px] font-bold outline-none focus:ring-1 focus:ring-gray-200 transition-all font-mono"
+                        className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-white/5 border border-transparent rounded-xl text-[10px] font-bold outline-none focus:ring-1 focus:ring-gray-200 dark:focus:ring-white/10 transition-all font-mono dark:text-white"
                         placeholder="De"
                       />
                     </div>
@@ -125,7 +127,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                         type="date" 
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-transparent rounded-xl text-[10px] font-bold outline-none focus:ring-1 focus:ring-gray-200 transition-all font-mono"
+                        className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-white/5 border border-transparent rounded-xl text-[10px] font-bold outline-none focus:ring-1 focus:ring-gray-200 dark:focus:ring-white/10 transition-all font-mono dark:text-white"
                         placeholder="Até"
                       />
                     </div>
@@ -159,20 +161,22 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group transition-all hover:border-gray-300"
+          className="bg-white dark:bg-dark-card p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-white/5 flex items-center justify-between group transition-all hover:border-gray-300 dark:hover:border-white/20"
         >
           <div className="flex items-center gap-4 flex-1">
             <div className={cn(
               "w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0",
-              entry.type === EntryType.PONTO ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"
+              entry.type === EntryType.PONTO 
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" 
+                : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
             )}>
               {entry.type === EntryType.PONTO ? <Clock className="w-6 h-6" /> : <CreditCard className="w-6 h-6" />}
             </div>
             
             <div className="flex-1 overflow-hidden">
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <div className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1.5 line-clamp-1">
                 {format(parseISO(entry.date), "dd 'de' MMMM", { locale: ptBR })}
-                <span className="w-1 h-1 rounded-full bg-gray-200" />
+                <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-white/10" />
                 <span className={cn(
                   "text-[9px] font-black leading-none",
                   entry.type === EntryType.PONTO ? "text-blue-500" : "text-emerald-500"
@@ -181,12 +185,14 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs bg-gray-50 px-2 py-0.5 rounded-md text-gray-600 font-bold whitespace-nowrap">
+                <span className="font-mono text-xs bg-gray-50 dark:bg-white/5 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-bold whitespace-nowrap">
                   {entry.entryTime} - {entry.exitTime}
                 </span>
                 <span className={cn(
                   "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                  entry.percentage === 1.0 ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-500"
+                  entry.percentage === 1.0 
+                    ? "bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400" 
+                    : "bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400"
                 )}>
                   +{entry.percentage * 100}%
                 </span>
@@ -196,10 +202,10 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
 
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <div className="text-lg font-bold tracking-tight">
+              <div className="text-lg font-bold tracking-tight dark:text-white">
                 {formatCurrency(entry.calculatedValue)}
               </div>
-              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">
                 {entry.calculatedHours.toFixed(1)} HORAS
               </div>
             </div>
@@ -210,7 +216,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                   e.stopPropagation();
                   onEdit(entry);
                 }}
-                className="p-2.5 text-gray-400 hover:text-blue-500 rounded-xl hover:bg-blue-50 transition-all active:scale-95 bg-gray-50/50 sm:bg-transparent"
+                className="p-2.5 text-gray-400 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-400 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95 bg-gray-50/50 dark:bg-white/5 sm:bg-transparent"
                 title="Editar"
               >
                 <Edit3 className="w-5 h-5" />
@@ -220,7 +226,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                   e.stopPropagation();
                   onDelete(entry.id);
                 }}
-                className="p-2.5 text-gray-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all active:scale-95 bg-gray-50/50 sm:bg-transparent"
+                className="p-2.5 text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95 bg-gray-50/50 dark:bg-white/5 sm:bg-transparent"
                 title="Excluir"
               >
                 <Trash2 className="w-5 h-5" />

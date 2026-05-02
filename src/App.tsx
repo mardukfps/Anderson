@@ -36,6 +36,21 @@ export default function App() {
   const [editingEntry, setEditingEntry] = useState<OvertimeEntry | null>(null);
   const [entries, setEntries] = useLocalStorage<OvertimeEntry[]>('jornada_entries', []);
   const [settings, setSettings] = useLocalStorage<AppSettings>('jornada_settings', DEFAULT_SETTINGS);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('jornada_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('jornada_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('jornada_theme', 'light');
+    }
+  }, [isDarkMode]);
   const [toast, setToast] = useState<{ title: string; message: string; isOpen: boolean }>({
     title: '',
     message: '',
@@ -133,7 +148,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] font-sans text-[#141414] pb-32 flex flex-col items-center selection:bg-gray-200">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-[#0A0A0A] font-sans text-[#141414] dark:text-gray-100 pb-32 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
       {/* Dynamic Content area */}
       <main className="w-full max-w-lg p-5 md:p-8 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
@@ -156,11 +171,11 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
             >
               <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold tracking-tight">Histórico</h1>
+                <h1 className="text-2xl font-bold tracking-tight dark:text-white">Histórico</h1>
                 <div className="flex gap-2">
                   <button 
                     onClick={exportReport}
-                    className="flex items-center gap-2 text-sm font-medium bg-white px-3 py-2 rounded-xl shadow-sm hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2 text-sm font-medium bg-white dark:bg-white/5 text-[#141414] dark:text-white px-3 py-2 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-white/10 transition-colors border dark:border-white/5"
                   >
                     <Download className="w-4 h-4" />
                     PDF
@@ -168,7 +183,7 @@ export default function App() {
                   {entries.length > 0 && (
                     <button 
                       onClick={clearEntries}
-                      className="flex items-center gap-2 text-sm font-medium bg-red-50 text-red-600 px-3 py-2 rounded-xl shadow-sm hover:bg-red-100 transition-colors"
+                      className="flex items-center gap-2 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 rounded-xl shadow-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors border dark:border-white/5"
                     >
                       Limpar
                     </button>
@@ -186,7 +201,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-6">
+              <h1 className="text-2xl font-bold tracking-tight mb-6 dark:text-white">
                 {editingEntry ? 'Editar Registro' : 'Novo Registro'}
               </h1>
               <div key={editingEntry ? `edit-${editingEntry.id}` : 'new'}>
@@ -210,15 +225,21 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-6">Configurações</h1>
-              <SettingsScreen settings={settings} onUpdate={updateSettings} onClearData={clearEntries} />
+              <h1 className="text-2xl font-bold tracking-tight mb-6 dark:text-white">Configurações</h1>
+              <SettingsScreen 
+                settings={settings} 
+                onUpdate={updateSettings} 
+                onClearData={clearEntries}
+                isDarkMode={isDarkMode}
+                onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              />
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-t border-gray-200 flex items-center justify-around px-6 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-black/80 backdrop-blur-md border-t border-gray-200 dark:border-white/5 flex items-center justify-around px-6 z-50 transition-colors">
         <NavButton 
           active={activeTab === 'dashboard'} 
           onClick={() => {
@@ -227,6 +248,7 @@ export default function App() {
           }} 
           icon={<LayoutDashboard />} 
           label="Início" 
+          isDarkMode={isDarkMode}
         />
         <NavButton 
           active={activeTab === 'history'} 
@@ -236,6 +258,7 @@ export default function App() {
           }} 
           icon={<History />} 
           label="Histórico" 
+          isDarkMode={isDarkMode}
         />
         <button 
           onClick={() => {
@@ -244,7 +267,7 @@ export default function App() {
           }}
           className={cn(
             "relative -top-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95",
-            "bg-[#141414] text-white"
+            "bg-[#141414] dark:bg-white text-white dark:text-black"
           )}
         >
           <Plus className="w-8 h-8" />
@@ -257,6 +280,7 @@ export default function App() {
           }} 
           icon={<SettingsIcon />} 
           label="Ajustes" 
+          isDarkMode={isDarkMode}
         />
       </nav>
 
@@ -309,16 +333,16 @@ export default function App() {
   );
 }
 
-function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+function NavButton({ active, onClick, icon, label, isDarkMode }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, isDarkMode?: boolean }) {
   return (
     <button 
       onClick={onClick}
       className={cn(
         "flex flex-col items-center gap-1 transition-all",
-        active ? "text-[#141414] scale-105" : "text-gray-400"
+        active ? (isDarkMode ? "text-white scale-105" : "text-[#141414] scale-105") : "text-gray-400 dark:text-gray-600"
       )}
     >
-      <div className={cn("p-1 rounded-lg", active && "bg-gray-100")}>
+      <div className={cn("p-1 rounded-lg transition-colors", active && (isDarkMode ? "bg-white/10" : "bg-gray-100"))}>
         {icon}
       </div>
       <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
