@@ -118,6 +118,7 @@ export default function App() {
       setActiveTab('history');
     } catch (error) {
       console.error('Failed to add entry:', error);
+      alert('Erro ao salvar o registro. Tente novamente.');
     }
   };
 
@@ -129,6 +130,7 @@ export default function App() {
       setActiveTab('history');
     } catch (error) {
       console.error('Failed to update entry:', error);
+      alert('Erro ao atualizar o registro. Tente novamente.');
     }
   };
 

@@ -103,6 +103,7 @@ async function startServer() {
       const entries = fetchEntriesStmt.all();
       res.json(entries);
     } catch (error) {
+      console.error('Error fetching entries:', error);
       res.status(500).json({ error: 'Failed to fetch entries' });
     }
   });
@@ -110,6 +111,7 @@ async function startServer() {
   app.post('/api/entries', (req, res) => {
     try {
       const entry = req.body;
+      console.log('Adding entry:', entry);
       insertEntryStmt.run(
         entry.id,
         entry.type,
@@ -123,6 +125,7 @@ async function startServer() {
       );
       res.status(201).json(entry);
     } catch (error) {
+      console.error('Error creating entry:', error);
       res.status(500).json({ error: 'Failed to create entry' });
     }
   });
@@ -131,6 +134,7 @@ async function startServer() {
     try {
       const { id } = req.params;
       const entry = req.body;
+      console.log('Updating entry:', id, entry);
       updateEntryStmt.run(
         entry.type,
         entry.date,
@@ -143,6 +147,7 @@ async function startServer() {
       );
       res.json(entry);
     } catch (error) {
+      console.error('Error updating entry:', error);
       res.status(500).json({ error: 'Failed to update entry' });
     }
   });
@@ -150,18 +155,22 @@ async function startServer() {
   app.delete('/api/entries/:id', (req, res) => {
     try {
       const { id } = req.params;
+      console.log('Deleting entry:', id);
       deleteEntryByIdStmt.run(id);
       res.status(204).end();
     } catch (error) {
+      console.error('Error deleting entry:', error);
       res.status(500).json({ error: 'Failed to delete entry' });
     }
   });
 
   app.delete('/api/entries', (req, res) => {
     try {
+      console.log('Clearing all entries');
       deleteEntriesStmt.run();
       res.status(204).end();
     } catch (error) {
+      console.error('Error clearing entries:', error);
       res.status(500).json({ error: 'Failed to clear entries' });
     }
   });
@@ -175,6 +184,7 @@ async function startServer() {
         res.json(null);
       }
     } catch (error) {
+      console.error('Error fetching settings:', error);
       res.status(500).json({ error: 'Failed to fetch settings' });
     }
   });
@@ -182,9 +192,14 @@ async function startServer() {
   app.post('/api/settings', (req, res) => {
     try {
       const settings = req.body;
+      console.log('Saving settings:', settings);
+      if (!settings) {
+        return res.status(400).json({ error: 'No settings provided' });
+      }
       insertSettingsStmt.run('app_settings', JSON.stringify(settings));
       res.json(settings);
     } catch (error) {
+      console.error('Error saving settings:', error);
       res.status(500).json({ error: 'Failed to save settings' });
     }
   });

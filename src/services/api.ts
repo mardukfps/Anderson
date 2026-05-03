@@ -6,7 +6,10 @@ export const apiService = {
   // Entries
   async getEntries(): Promise<OvertimeEntry[]> {
     const response = await fetch(`${API_BASE}/entries`);
-    if (!response.ok) throw new Error('Failed to fetch entries');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao buscar registros');
+    }
     return response.json();
   },
 
@@ -16,7 +19,10 @@ export const apiService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
     });
-    if (!response.ok) throw new Error('Failed to add entry');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao adicionar registro');
+    }
     return response.json();
   },
 
@@ -26,7 +32,10 @@ export const apiService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
     });
-    if (!response.ok) throw new Error('Failed to update entry');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao atualizar registro');
+    }
     return response.json();
   },
 
@@ -34,20 +43,29 @@ export const apiService = {
     const response = await fetch(`${API_BASE}/entries/${id}`, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to delete entry');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao excluir registro');
+    }
   },
 
   async clearEntries(): Promise<void> {
     const response = await fetch(`${API_BASE}/entries`, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to clear entries');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao limpar registros');
+    }
   },
 
   // Settings
   async getSettings(): Promise<AppSettings | null> {
     const response = await fetch(`${API_BASE}/settings`);
-    if (!response.ok) throw new Error('Failed to fetch settings');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao buscar configurações');
+    }
     return response.json();
   },
 
@@ -57,7 +75,10 @@ export const apiService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     });
-    if (!response.ok) throw new Error('Failed to save settings');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao salvar configurações');
+    }
     return response.json();
   },
 

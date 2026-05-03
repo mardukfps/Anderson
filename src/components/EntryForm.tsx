@@ -9,7 +9,7 @@ import TimeInput from './TimeInput';
 import CalendarInput from './CalendarInput';
 
 interface EntryFormProps {
-  onSubmit: (entry: OvertimeEntry) => void;
+  onSubmit: (entry: OvertimeEntry) => void | Promise<void>;
   settings: AppSettings;
   initialEntry?: OvertimeEntry;
   onCancel?: () => void;
@@ -44,32 +44,36 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validate()) {
       return;
     }
 
-    setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-    const entryData: OvertimeEntry = {
-      id: initialEntry?.id || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9)),
-      type,
-      date,
-      entryTime,
-      exitTime,
-      percentage,
-      calculatedHours: stats.calculatedHours,
-      calculatedValue: stats.calculatedValue,
-      createdAt: initialEntry?.createdAt || Date.now(),
-    };
+      const entryData: OvertimeEntry = {
+        id: initialEntry?.id || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9)),
+        type,
+        date,
+        entryTime,
+        exitTime,
+        percentage,
+        calculatedHours: stats.calculatedHours,
+        calculatedValue: stats.calculatedValue,
+        createdAt: initialEntry?.createdAt || Date.now(),
+      };
 
-    // Small delay for feel
-    setTimeout(() => {
-      onSubmit(entryData);
+      // Ensure we await the result from the parent
+      await onSubmit(entryData);
+    } catch (err) {
+      console.error('Submit error:', err);
+      // Parent handle alert, but we reset state here
+    } finally {
       setIsSubmitting(false);
-    }, 400);
+    }
   };
 
   return (
