@@ -347,6 +347,7 @@ export default function App() {
               <h1 className="text-3xl font-black tracking-tight mb-6 text-app-text">Ajustes</h1>
               <SettingsScreen 
                 settings={settings} 
+                onUpdate={updateSettings}
                 onPendingChanges={(changes) => setPendingSettings(changes)}
                 onThemePreview={(theme) => {
                   // This is just for live preview, no need to set state

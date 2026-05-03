@@ -11,24 +11,39 @@ import ConfirmationModal from './ConfirmationModal';
 
 interface SettingsScreenProps {
   settings: AppSettings;
+  onUpdate: (settings: AppSettings) => Promise<void>;
   onPendingChanges: (settings: AppSettings | null) => void;
   onThemePreview: (theme: string) => void;
   onClearHistory: () => void;
 }
 
-export default function SettingsScreen({ settings, onPendingChanges, onThemePreview, onClearHistory }: SettingsScreenProps) {
+export default function SettingsScreen({ settings, onUpdate, onPendingChanges, onThemePreview, onClearHistory }: SettingsScreenProps) {
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
   const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
   const [theme, setTheme] = useState(settings.theme || 'dark');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Parse strings to numbers for comparison and saving
+  const currentBaseRate = useMemo(() => {
+    const cleaned = baseHourlyRate.toString().replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  }, [baseHourlyRate]);
+
+  const currentMonthlyLimit = useMemo(() => {
+    const num = parseInt(monthlyLimit.toString(), 10);
+    return isNaN(num) ? 0 : num;
+  }, [monthlyLimit]);
 
   // Track if changes are present
   const isDirty = useMemo(() => {
     return theme !== settings.theme || 
-           baseHourlyRate !== settings.baseHourlyRate?.toString() || 
-           monthlyLimit !== settings.monthlyLimit?.toString() ||
+           currentBaseRate !== settings.baseHourlyRate || 
+           currentMonthlyLimit !== settings.monthlyLimit ||
            defaultPercentage !== settings.defaultPercentage;
-  }, [theme, baseHourlyRate, monthlyLimit, defaultPercentage, settings]);
+  }, [theme, currentBaseRate, currentMonthlyLimit, defaultPercentage, settings]);
 
   // Apply theme immediately for preview
   useEffect(() => {
@@ -44,15 +59,39 @@ export default function SettingsScreen({ settings, onPendingChanges, onThemePrev
     if (isDirty) {
       onPendingChanges({
         ...settings,
-        baseHourlyRate: Number(baseHourlyRate.toString().replace(',', '.')) || 0,
-        monthlyLimit: Number(monthlyLimit.toString().replace(',', '.')) || 0,
+        baseHourlyRate: currentBaseRate,
+        monthlyLimit: currentMonthlyLimit,
         defaultPercentage,
         theme: theme as any
       });
     } else {
       onPendingChanges(null);
     }
-  }, [isDirty, theme, baseHourlyRate, monthlyLimit, defaultPercentage, settings]);
+  }, [isDirty, theme, currentBaseRate, currentMonthlyLimit, defaultPercentage, settings]);
+
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!isDirty || isSaving) return;
+
+    try {
+      setIsSaving(true);
+      const updatedSettings: AppSettings = {
+        ...settings,
+        baseHourlyRate: currentBaseRate,
+        monthlyLimit: currentMonthlyLimit,
+        defaultPercentage,
+        theme: theme as any,
+      };
+      
+      await onUpdate(updatedSettings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error: any) {
+      alert(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Sync with prop if it changes externally
   useEffect(() => {
@@ -180,13 +219,40 @@ export default function SettingsScreen({ settings, onPendingChanges, onThemePrev
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-app-accent p-6 rounded-3xl text-app-accent-text flex items-center justify-between shadow-xl shadow-app-accent/20"
+            className="space-y-4"
           >
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5" />
-              <p className="text-[10px] font-black uppercase tracking-widest leading-none">Alterações pendentes</p>
+            <div className="bg-app-accent/10 p-5 rounded-3xl border border-app-accent/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-app-accent" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-app-text">Alterações pendentes</p>
+              </div>
             </div>
-            <p className="text-[8px] font-black opacity-70 italic uppercase">Salve ao navegar</p>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleSave()}
+              disabled={isSaving}
+              className={cn(
+                "w-full py-5 rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl transition-all flex items-center justify-center gap-3",
+                saved 
+                  ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+                  : isSaving 
+                    ? "bg-app-muted text-app-text opacity-50 cursor-not-allowed"
+                    : "bg-app-accent text-app-accent-text shadow-app-accent/40"
+              )}
+            >
+              {saved ? (
+                "Configurações Salvas!"
+              ) : isSaving ? (
+                "Salvando..."
+              ) : (
+                <>
+                  <Save className="w-5 h-5" /> 
+                  Salvar Agora
+                </>
+              )}
+            </motion.button>
           </motion.div>
         )}
       </div>
