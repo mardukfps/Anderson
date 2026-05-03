@@ -61,7 +61,7 @@ export default function App() {
       setModalConfig({
         isOpen: true,
         title: 'Aplicar Tema?',
-        message: `Você selecionou o tema "${pendingTheme}". Deseja aplicar esta alteração antes de sair?`,
+        message: `Você selecionou um novo tema. Deseja aplicar esta alteração antes de sair?`,
         confirmLabel: 'Sim, aplicar',
         isDanger: false,
         onConfirm: async () => {
@@ -70,19 +70,21 @@ export default function App() {
             await updateSettings(updatedSettings);
             setPendingTheme(null);
             setModalConfig(prev => ({ ...prev, isOpen: false }));
-            setActiveTab(nextTab);
+            setActiveTab('dashboard'); // Return to initial screen as requested
           } catch (error) {
             console.error('Failed to apply theme during navigation:', error);
           }
         },
         onCancel: () => {
-          // Revert classes immediately
+          // Revert classes immediately to the saved theme
           const root = window.document.documentElement;
           root.classList.remove('light', 'dark', 'high-contrast');
           root.classList.add(settings.theme);
+          
           setPendingTheme(null);
+          setSettings({ ...settings }); // Trigger child effect to reset display theme
           setModalConfig(p => ({ ...p, isOpen: false }));
-          setActiveTab('dashboard');
+          // We stay on the current tab (settings) if they don't want to apply
         }
       } as any);
       

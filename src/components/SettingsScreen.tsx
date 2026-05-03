@@ -31,6 +31,11 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview }: S
     if (theme !== settings.theme) {
       onThemePreview(theme);
     }
+    
+    return () => {
+      // If we are leaving but didn't save, the App.tsx will handle the modal revert.
+      // We don't revert here because it would flicker before the modal appears.
+    };
   }, [theme, settings.theme]);
 
   // Sync with prop if it changes (e.g. after initial fetch)
