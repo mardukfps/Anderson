@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const db = new Database('database.sqlite');
+db.pragma('journal_mode = WAL');
 
 // Initialize database schema
 db.exec(`
@@ -30,17 +31,66 @@ db.exec(`
   );
 `);
 
+// Pre-prepare statements for performance
+const insertEntryStmt = db.prepare(`
+  INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, percentage, calculatedValue, createdAt)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const deleteEntriesStmt = db.prepare('DELETE FROM entries');
+const deleteSettingsStmt = db.prepare('DELETE FROM settings');
+const insertSettingsStmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+const fetchEntriesStmt = db.prepare('SELECT * FROM entries ORDER BY date DESC, entryTime DESC');
+const fetchAllEntriesStmt = db.prepare('SELECT * FROM entries');
+const fetchSettingsStmt = db.prepare('SELECT value FROM settings WHERE key = ?');
+const deleteEntryByIdStmt = db.prepare('DELETE FROM entries WHERE id = ?');
+const updateEntryStmt = db.prepare(`
+  UPDATE entries 
+  SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, percentage = ?, calculatedValue = ?
+  WHERE id = ?
+`);
+
+// Optimized Import Transaction
+const importTransaction = db.transaction((backupData) => {
+  if (!backupData || !backupData.data) return;
+
+  deleteEntriesStmt.run();
+  deleteSettingsStmt.run();
+
+  const entries = backupData.data.entries;
+  if (entries && Array.isArray(entries)) {
+    for (const entry of entries) {
+      insertEntryStmt.run(
+        entry.id,
+        entry.type,
+        entry.date,
+        entry.entryTime,
+        entry.exitTime,
+        entry.calculatedHours,
+        entry.percentage,
+        entry.calculatedValue,
+        entry.createdAt
+      );
+    }
+  }
+
+  if (backupData.data?.settings) {
+    insertSettingsStmt.run('app_settings', JSON.stringify(backupData.data.settings));
+  }
+});
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '20mb' }));
+  app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
   // API Routes
   app.get('/api/entries', (req, res) => {
     try {
-      const entries = db.prepare('SELECT * FROM entries ORDER BY date DESC, entryTime DESC').all();
+      const entries = fetchEntriesStmt.all();
       res.json(entries);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch entries' });
@@ -50,11 +100,7 @@ async function startServer() {
   app.post('/api/entries', (req, res) => {
     try {
       const entry = req.body;
-      const stmt = db.prepare(`
-        INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, percentage, calculatedValue, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(
+      insertEntryStmt.run(
         entry.id,
         entry.type,
         entry.date,
@@ -75,12 +121,7 @@ async function startServer() {
     try {
       const { id } = req.params;
       const entry = req.body;
-      const stmt = db.prepare(`
-        UPDATE entries 
-        SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, percentage = ?, calculatedValue = ?
-        WHERE id = ?
-      `);
-      stmt.run(
+      updateEntryStmt.run(
         entry.type,
         entry.date,
         entry.entryTime,
@@ -99,7 +140,7 @@ async function startServer() {
   app.delete('/api/entries/:id', (req, res) => {
     try {
       const { id } = req.params;
-      db.prepare('DELETE FROM entries WHERE id = ?').run(id);
+      deleteEntryByIdStmt.run(id);
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete entry' });
@@ -108,7 +149,7 @@ async function startServer() {
 
   app.delete('/api/entries', (req, res) => {
     try {
-      db.prepare('DELETE FROM entries').run();
+      deleteEntriesStmt.run();
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ error: 'Failed to clear entries' });
@@ -117,7 +158,7 @@ async function startServer() {
 
   app.get('/api/settings', (req, res) => {
     try {
-      const row = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_settings');
+      const row = fetchSettingsStmt.get('app_settings') as { value: string } | undefined;
       if (row) {
         res.json(JSON.parse(row.value));
       } else {
@@ -131,13 +172,9 @@ async function startServer() {
   app.post('/api/settings', (req, res) => {
     try {
       const settings = req.body;
-      console.log('Saving settings:', JSON.stringify(settings));
-      const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-      const result = stmt.run('app_settings', JSON.stringify(settings));
-      console.log('Save result:', result);
+      insertSettingsStmt.run('app_settings', JSON.stringify(settings));
       res.json(settings);
     } catch (error) {
-      console.error('Failed to save settings:', error);
       res.status(500).json({ error: 'Failed to save settings' });
     }
   });
@@ -145,8 +182,8 @@ async function startServer() {
   // Backup & Restore
   app.get('/api/backup', (req, res) => {
     try {
-      const entries = db.prepare('SELECT * FROM entries').all();
-      const settingsRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_settings');
+      const entries = fetchAllEntriesStmt.all();
+      const settingsRow = fetchSettingsStmt.get('app_settings') as { value: string } | undefined;
       const settings = settingsRow ? JSON.parse(settingsRow.value) : null;
       
       res.json({
@@ -163,41 +200,17 @@ async function startServer() {
   });
 
   app.post('/api/backup/import', (req, res) => {
-    const transaction = db.transaction((backupData) => {
-      // Clear existing data
-      db.prepare('DELETE FROM entries').run();
-      db.prepare('DELETE FROM settings').run();
-
-      // Import entries
-      if (backupData.data.entries && Array.isArray(backupData.data.entries)) {
-        const stmt = db.prepare(`
-          INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, percentage, calculatedValue, createdAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-        for (const entry of backupData.data.entries) {
-          stmt.run(
-            entry.id,
-            entry.type,
-            entry.date,
-            entry.entryTime,
-            entry.exitTime,
-            entry.calculatedHours,
-            entry.percentage,
-            entry.calculatedValue,
-            entry.createdAt
-          );
-        }
-      }
-
-      // Import settings
-      if (backupData.data.settings) {
-        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
-          .run('app_settings', JSON.stringify(backupData.data.settings));
-      }
-    });
-
+    console.log('Received backup import request');
     try {
-      transaction(req.body);
+      if (!req.body || !req.body.data) {
+        console.error('Invalid backup data received:', req.body);
+        return res.status(400).json({ error: 'Invalid backup data' });
+      }
+      
+      console.log('Starting import transaction...');
+      importTransaction(req.body);
+      console.log('Import transaction completed successfully');
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Import failed:', error);

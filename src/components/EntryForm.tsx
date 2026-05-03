@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { OvertimeEntry, EntryType, AppSettings } from '../types';
 import { calculateEntryPerformance } from '../lib/calculations';
@@ -24,7 +24,9 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ date?: boolean; entryTime?: boolean; exitTime?: boolean }>({});
 
-  const stats = calculateEntryPerformance(entryTime, exitTime, percentage, settings.baseHourlyRate);
+  const stats = useMemo(() => 
+    calculateEntryPerformance(entryTime, exitTime, percentage, settings.baseHourlyRate),
+  [entryTime, exitTime, percentage, settings.baseHourlyRate]);
 
   const validate = () => {
     const newErrors: typeof errors = {};

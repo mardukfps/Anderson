@@ -22,7 +22,6 @@ export interface AppSettings {
   monthlyLimit: number;
   defaultPercentage: 0.5 | 1.0;
   theme: Theme;
-  dailyWorkload: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -30,5 +29,4 @@ export const DEFAULT_SETTINGS: AppSettings = {
   monthlyLimit: 40,
   defaultPercentage: 0.5,
   theme: 'dark',
-  dailyWorkload: 8.0,
 };
