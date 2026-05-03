@@ -70,8 +70,11 @@ export default function ConfirmationModal({
                   <motion.button 
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={handleStay} 
-                    className="p-3 text-app-muted hover:bg-app-bg rounded-full transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStay();
+                    }} 
+                    className="p-3 text-app-muted hover:bg-app-bg rounded-full transition-colors relative z-[130]"
                   >
                     <X className="w-5 h-5" />
                   </motion.button>
@@ -83,28 +86,32 @@ export default function ConfirmationModal({
                 </p>
               </div>
               
-              <div className="p-6 bg-app-bg/50 backdrop-blur-md flex flex-col gap-3">
+              <div className="p-6 bg-app-bg/50 backdrop-blur-md flex flex-col gap-3 min-h-min shrink-0">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onConfirm();
                   }}
-                  className={`w-full py-5 px-4 font-black uppercase tracking-[0.2em] text-[10px] rounded-3xl shadow-xl transition-all ${
+                  className={`w-full py-5 px-4 font-black uppercase tracking-[0.2em] text-[10px] rounded-3xl shadow-xl transition-all relative z-[130] ${
                     isDanger 
-                      ? 'bg-red-500 text-white shadow-xl shadow-red-500/20' 
-                      : 'bg-app-accent text-app-accent-text shadow-xl shadow-app-accent/20'
+                      ? 'bg-red-500 text-white shadow-xl shadow-red-500/20 active:bg-red-600' 
+                      : 'bg-app-accent text-app-accent-text shadow-xl shadow-app-accent/20 active:opacity-90'
                   }`}
                 >
                   {confirmLabel}
                 </motion.button>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 relative z-[130]">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onCancel}
-                    className="flex-1 py-4 px-4 bg-app-card border border-app-border text-app-text font-black uppercase tracking-[0.15em] text-[9px] rounded-2xl transition-all shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCancel();
+                    }}
+                    className="flex-1 py-4 px-4 bg-app-card border border-app-border text-app-text font-black uppercase tracking-[0.15em] text-[9px] rounded-2xl transition-all shadow-sm active:bg-app-bg"
                   >
                     {cancelLabel}
                   </motion.button>
@@ -113,8 +120,11 @@ export default function ConfirmationModal({
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={onStay}
-                      className="flex-1 py-4 px-4 bg-transparent text-app-muted font-black uppercase tracking-[0.15em] text-[9px] rounded-2xl transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStay();
+                      }}
+                      className="flex-1 py-4 px-4 bg-transparent text-app-muted font-black uppercase tracking-[0.15em] text-[9px] rounded-2xl transition-all active:opacity-50"
                     >
                       Cancelar
                     </motion.button>

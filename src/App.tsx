@@ -69,14 +69,20 @@ export default function App() {
         cancelLabel: 'Sair sem Salvar',
         isDanger: false,
         onConfirm: async () => {
-          try {
-            await updateSettings(pendingSettings);
-            setModalConfig(prev => ({ ...prev, isOpen: false }));
-            setEditingEntry(null);
-            setActiveTab(nextTab); 
-          } catch (error) {
-            console.error('Failed to save settings during navigation:', error);
+          const currentSettings = pendingSettings;
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          
+          if (currentSettings) {
+            try {
+              await updateSettings(currentSettings);
+            } catch (error) {
+              console.error('Failed to save settings during navigation:', error);
+            }
           }
+          
+          setEditingEntry(null);
+          setPendingSettings(null);
+          setActiveTab(nextTab); 
         },
         onCancel: () => {
           // Discard changes and move
