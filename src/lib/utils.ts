@@ -28,6 +28,19 @@ export function decimalToTimeString(decimal: number): string {
 }
 
 /**
+ * Formata horas decimais em uma string legível (ex: 1.25 -> "1h 15m")
+ */
+export function formatExactHours(decimal: number): string {
+  const hours = Math.floor(decimal);
+  const minutes = Math.round((decimal - hours) * 60);
+  
+  if (hours === 0 && minutes === 0) return "0h";
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+}
+
+/**
  * Formats a number as currency (BRL)
  */
 export function formatCurrency(value: number): string {

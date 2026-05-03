@@ -45,14 +45,14 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
     format(parseISO(entry.date), 'dd/MM/yyyy'),
     entry.type === EntryType.PONTO ? 'Ponto Eletrônico' : 'Cartão Manual',
     `${entry.entryTime} - ${entry.exitTime}`,
-    `${entry.calculatedHours.toFixed(1)}h`,
-    `${entry.percentage * 100}%`,
+    `${entry.calculatedHours.toFixed(2)}h`,
+    entry.multiplier === 1.0 ? '50%' : '100%',
     formatCurrency(entry.calculatedValue)
   ]);
 
   autoTable(doc, {
     startY: 80,
-    head: [['Data', 'Tipo', 'Horário', 'Duração', 'Adicional', 'Valor']],
+    head: [['Data', 'Tipo', 'Horário', 'Duração', 'Multiplicador', 'Valor']],
     body: tableData,
     theme: 'striped',
     headStyles: { fillColor: [20, 20, 20], fontSize: 8 },

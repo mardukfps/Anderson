@@ -8,13 +8,13 @@ import { timeStringToDecimal } from './utils';
 export function calculateEntryPerformance(
   entryTime: string,
   exitTime: string,
-  percentage: number,
+  multiplier: number,
   baseHourlyRate: number
 ) {
   const start = parse(entryTime, 'HH:mm', new Date());
   let end = parse(exitTime, 'HH:mm', new Date());
 
-  // Handle shift crossing midnight
+  // Tratar virada de meia-noite
   if (end < start) {
     end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
   }
@@ -22,11 +22,15 @@ export function calculateEntryPerformance(
   const durationMinutes = differenceInMinutes(end, start);
   const durationHours = durationMinutes / 60;
   
-  const additionalMultiplier = 1 + percentage;
-  const entryValue = durationHours * baseHourlyRate * additionalMultiplier;
+  // Cálculo Direto: (Valor da Hora) * (Multiplicador) * (Duração em Horas)
+  const rawValue = (durationMinutes * baseHourlyRate * multiplier) / 60;
+  const entryValue = Math.round(rawValue * 100) / 100;
 
   return {
-    calculatedHours: durationHours,
-    calculatedValue: entryValue
+    realHours: Number(durationHours.toFixed(4)),
+    calculatedHours: Number(durationHours.toFixed(4)), 
+    calculatedValue: entryValue,
+    bonusMultiplier: multiplier,
+    isNightShift: false
   };
 }

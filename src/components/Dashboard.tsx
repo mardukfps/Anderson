@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { OvertimeEntry, AppSettings, EntryType } from '../types';
-import { formatCurrency, cn } from '../lib/utils';
+import { formatCurrency, cn, formatExactHours } from '../lib/utils';
 import { Wallet, Clock, TrendingUp, CircleCheck } from 'lucide-react';
 
 interface DashboardProps {
@@ -99,7 +99,7 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
             <div className="flex justify-between items-end">
               <div>
                 <span className="text-app-muted text-[10px] font-black uppercase tracking-widest block mb-1">Total de Horas Extras</span>
-                <div className="text-3xl font-black tracking-tight text-app-text">{stats.totalHours.toFixed(1)}<span className="text-sm font-bold opacity-50 ml-0.5">h</span></div>
+                <div className="text-3xl font-black tracking-tight text-app-text">{formatExactHours(stats.totalHours)}</div>
               </div>
               <div className="text-right">
                 <span className="text-app-muted text-[10px] font-black uppercase tracking-widest block mb-1">Meta Mensal</span>
@@ -131,13 +131,13 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
         <StatCard 
           icon={<Clock className="w-5 h-5 text-blue-500" />}
           label="Ponto"
-          value={`${stats.pontoHours.toFixed(1)}h`}
+          value={formatExactHours(stats.pontoHours)}
           bgColor="bg-blue-500/10"
         />
         <StatCard 
           icon={<CircleCheck className="w-5 h-5 text-emerald-500" />}
           label="Cartão"
-          value={`${stats.cartaoHours.toFixed(1)}h`}
+          value={formatExactHours(stats.cartaoHours)}
           bgColor="bg-emerald-500/10"
         />
       </div>

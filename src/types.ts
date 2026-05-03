@@ -10,8 +10,9 @@ export interface OvertimeEntry {
   entryTime: string; // HH:mm
   exitTime: string; // HH:mm
   calculatedHours: number; // decimal
-  percentage: 0.5 | 1.0;
+  multiplier: 1.0 | 2.0;
   calculatedValue: number;
+  isNightShift?: boolean;
   createdAt: number;
 }
 
@@ -20,13 +21,13 @@ export type Theme = 'light' | 'dark' | 'high-contrast';
 export interface AppSettings {
   baseHourlyRate: number;
   monthlyLimit: number;
-  defaultPercentage: 0.5 | 1.0;
+  defaultMultiplier: 1.0 | 2.0;
   theme: Theme;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   baseHourlyRate: 0,
   monthlyLimit: 40,
-  defaultPercentage: 0.5,
+  defaultMultiplier: 2.0,
   theme: 'dark',
 };

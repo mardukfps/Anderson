@@ -18,7 +18,7 @@ interface SettingsScreenProps {
 export default function SettingsScreen({ settings, onUpdate, onThemePreview, onClearHistory }: SettingsScreenProps) {
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
-  const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
+  const [defaultMultiplier, setDefaultMultiplier] = useState<1.0 | 2.0>(settings.defaultMultiplier || 1.0);
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(settings.theme || 'dark');
   const [saved, setSaved] = useState(false);
@@ -27,7 +27,7 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
   const hasChanges = (
     (Number(baseHourlyRate.toString().replace(',', '.')) || 0) !== (settings.baseHourlyRate || 0) ||
     (Number(monthlyLimit.toString().replace(',', '.')) || 0) !== (settings.monthlyLimit || 0) ||
-    defaultPercentage !== (settings.defaultPercentage || 0.5) ||
+    defaultMultiplier !== (settings.defaultMultiplier || 1.0) ||
     theme !== (settings.theme || 'dark')
   );
 
@@ -46,7 +46,7 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
   React.useEffect(() => {
     setBaseHourlyRate(settings.baseHourlyRate?.toString() || '0');
     setMonthlyLimit(settings.monthlyLimit?.toString() || '40');
-    setDefaultPercentage(settings.defaultPercentage || 0.5);
+    setDefaultMultiplier(settings.defaultMultiplier || 1.0);
     setTheme(settings.theme || 'dark');
   }, [settings]);
 
@@ -58,7 +58,7 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
         ...settings,
         baseHourlyRate: Number(baseHourlyRate.toString().replace(',', '.')) || 0,
         monthlyLimit: Number(monthlyLimit.toString().replace(',', '.')) || 0,
-        defaultPercentage,
+        defaultMultiplier,
         theme: theme as any,
       };
       
@@ -115,22 +115,22 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
-              <Percent className="w-3 h-3" /> Porcentagem Padrão (HE)
+              <Percent className="w-3 h-3" /> Multiplicador Padrão
             </label>
             <div className="flex gap-2">
-              {[0.5, 1.0].map((val) => (
+              {[1.0, 2.0].map((val) => (
                 <button
                   key={val}
                   type="button"
-                  onClick={() => setDefaultPercentage(val as 0.5 | 1.0)}
+                  onClick={() => setDefaultMultiplier(val as 1.0 | 2.0)}
                   className={cn(
                     "flex-1 py-3 rounded-xl font-bold transition-all border",
-                    defaultPercentage === val 
+                    defaultMultiplier === val 
                       ? "bg-app-accent text-app-accent-text border-transparent" 
                       : "bg-app-bg text-app-muted border-app-border"
                   )}
                 >
-                  {val === 0.5 ? '50%' : '100%'}
+                  {val === 1.0 ? '50% (Normal)' : '100% (Dobro)'}
                 </button>
               ))}
             </div>

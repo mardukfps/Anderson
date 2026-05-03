@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { OvertimeEntry, EntryType } from '../types';
-import { formatCurrency, cn } from '../lib/utils';
+import { formatCurrency, cn, formatExactHours } from '../lib/utils';
 import { 
   Trash2, Edit3, Clock, CreditCard, Filter, X
 } from 'lucide-react';
@@ -187,12 +187,17 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                     </span>
                     <span className={cn(
                       "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                      entry.percentage === 1.0 
+                      entry.multiplier === 2.0 
                         ? "bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400" 
                         : "bg-app-bg text-app-muted border border-app-border"
                     )}>
-                      +{entry.percentage * 100}%
+                      {entry.multiplier === 1.0 ? '50%' : '100%'}
                     </span>
+                    {entry.isNightShift && (
+                      <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                        Noturno
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -203,7 +208,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                     {formatCurrency(entry.calculatedValue)}
                   </div>
                   <div className="text-[10px] font-bold text-app-muted uppercase tracking-widest">
-                    {entry.calculatedHours.toFixed(1)} HORAS
+                    {formatExactHours(entry.calculatedHours)}
                   </div>
                 </div>
                 

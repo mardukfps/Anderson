@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { OvertimeEntry, EntryType, AppSettings } from '../types';
 import { calculateEntryPerformance } from '../lib/calculations';
-import { cn } from '../lib/utils';
+import { cn, formatExactHours, formatCurrency } from '../lib/utils';
 import { Clock, Calendar, Percent, Tag, PlusCircle } from 'lucide-react';
 import TimeInput from './TimeInput';
 
@@ -20,13 +20,13 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
   const [date, setDate] = useState(initialEntry?.date || new Date().toISOString().split('T')[0]);
   const [entryTime, setEntryTime] = useState(initialEntry?.entryTime || '08:00');
   const [exitTime, setExitTime] = useState(initialEntry?.exitTime || '18:00');
-  const [percentage, setPercentage] = useState<0.5 | 1.0>(initialEntry?.percentage || settings.defaultPercentage || 0.5);
+  const [multiplier, setMultiplier] = useState<1.0 | 2.0>(initialEntry?.multiplier || settings.defaultMultiplier || 1.0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ date?: boolean; entryTime?: boolean; exitTime?: boolean }>({});
 
   const stats = useMemo(() => 
-    calculateEntryPerformance(entryTime, exitTime, percentage, settings.baseHourlyRate),
-  [entryTime, exitTime, percentage, settings.baseHourlyRate]);
+    calculateEntryPerformance(entryTime, exitTime, multiplier, settings.baseHourlyRate),
+  [entryTime, exitTime, multiplier, settings.baseHourlyRate]);
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -60,9 +60,10 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
         date,
         entryTime,
         exitTime,
-        percentage,
+        multiplier,
         calculatedHours: stats.calculatedHours,
         calculatedValue: stats.calculatedValue,
+        isNightShift: stats.isNightShift,
         createdAt: initialEntry?.createdAt || Date.now(),
       };
 
@@ -157,39 +158,39 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
           </motion.div>
         </div>
 
-        {/* Percentage Selector */}
+        {/* Multiplier Selector */}
         <div className="space-y-3">
           <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
-            <Percent className="w-3 h-3" /> Adicional de Hora Extra
+            <Percent className="w-3 h-3" /> Multiplicador da Hora
           </label>
           <div className="grid grid-cols-2 gap-4">
             <motion.button
               type="button"
               whileTap={{ scale: 0.95 }}
-              onClick={() => setPercentage(0.5)}
+              onClick={() => setMultiplier(1.0)}
               className={cn(
                 "p-4 rounded-3xl border transition-all flex flex-col items-center gap-2",
-                percentage === 0.5 
+                multiplier === 1.0 
                   ? "border-app-accent bg-app-accent text-app-accent-text shadow-lg shadow-app-accent/20" 
                   : "border-app-border bg-app-card text-app-muted hover:border-app-accent/30"
               )}
             >
               <span className="text-2xl font-bold">50%</span>
-              <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">Dia Útil</span>
+              <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">Normal</span>
             </motion.button>
             <motion.button
               type="button"
               whileTap={{ scale: 0.95 }}
-              onClick={() => setPercentage(1.0)}
+              onClick={() => setMultiplier(2.0)}
               className={cn(
                 "p-4 rounded-3xl border transition-all flex flex-col items-center gap-2",
-                percentage === 1.0 
+                multiplier === 2.0 
                   ? "border-app-accent bg-app-accent text-app-accent-text shadow-lg shadow-app-accent/20" 
                   : "border-app-border bg-app-card text-app-muted hover:border-app-accent/30"
               )}
             >
               <span className="text-2xl font-bold">100%</span>
-              <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">Fim de Semana</span>
+              <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">Dobro</span>
             </motion.button>
           </div>
         </div>
@@ -215,14 +216,22 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
           <div>
             <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Duração Total</span>
             <div className="text-2xl font-mono text-app-text font-bold leading-none">
-              {stats.calculatedHours.toFixed(1)}<span className="text-sm text-app-muted ml-0.5">h</span>
+              {formatExactHours(stats.realHours)}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="px-1.5 py-0.5 rounded-md bg-app-accent/10 text-app-accent text-[9px] font-black uppercase">
+                {multiplier === 1.0 ? 'Hora Extra 50%' : 'Hora Extra 100%'}
+              </span>
             </div>
           </div>
-          <div className="text-right">
-            <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Valor Estimado</span>
+          <div className="text-right flex flex-col justify-end">
+            <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Valor Total ({multiplier === 1.0 ? '50%' : '100%'})</span>
             <div className="text-2xl font-bold text-app-accent leading-none">
-              R$ {stats.calculatedValue.toFixed(2)}
+              {formatCurrency(stats.calculatedValue)}
             </div>
+            <span className="text-[9px] text-app-muted font-medium mt-1">
+              Base: {formatCurrency(settings?.baseHourlyRate || 0)}/h
+            </span>
           </div>
         </div>
       </motion.div>
