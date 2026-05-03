@@ -317,6 +317,7 @@ export default function App() {
                 settings={settings} 
                 onUpdate={updateSettings} 
                 onThemePreview={(theme) => setPendingTheme(theme)}
+                onClearHistory={clearEntries}
               />
             </motion.div>
           )}

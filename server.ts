@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 
 const db = new Database('database.sqlite');
 db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
 
 // Initialize database schema
 db.exec(`
@@ -152,15 +153,31 @@ async function startServer() {
   app.post('/api/settings', (req, res) => {
     try {
       const settings = req.body;
-      console.log('Saving settings:', settings);
-      if (!settings) {
-        return res.status(400).json({ error: 'No settings provided' });
+      console.log('API: SAVE SETTINGS - Payload:', JSON.stringify(settings));
+      
+      if (!settings || typeof settings !== 'object') {
+        console.error('API Error: Invalid settings body type:', typeof settings);
+        return res.status(400).json({ error: 'Dados de configuração inválidos.' });
       }
-      insertSettingsStmt.run('app_settings', JSON.stringify(settings));
+
+      // Check for basic structure
+      if (!settings.theme || settings.baseHourlyRate === undefined) {
+         console.warn('API Warning: settings payload might be incomplete', settings);
+      }
+
+      const settingsJson = JSON.stringify(settings);
+      
+      // Use a direct execution to avoid potential prepared statement state issues
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('app_settings', settingsJson);
+      
+      console.log('API Success: Settings saved successfully.');
       res.json(settings);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      res.status(500).json({ error: 'Failed to save settings' });
+    } catch (error: any) {
+      console.error('API Error saving settings:', error);
+      res.status(500).json({ 
+        error: 'Erro crítico ao salvar no banco de dados.',
+        details: error.message 
+      });
     }
   });
 

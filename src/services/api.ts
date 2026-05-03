@@ -77,7 +77,9 @@ export const apiService = {
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'Falha ao salvar configurações');
+      const message = err.error || 'Falha ao salvar configurações';
+      const details = err.details ? ` (${err.details})` : '';
+      throw new Error(`${message}${details}`);
     }
     return response.json();
   },

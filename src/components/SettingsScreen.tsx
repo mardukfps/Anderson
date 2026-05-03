@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { AppSettings } from '../types';
 import { 
-  Settings as SettingsIcon, DollarSign, Target, Save, Clock, 
+  Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2, 
   Percent, Palette, Moon, Sun, Monitor, AlertCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -13,9 +13,10 @@ interface SettingsScreenProps {
   settings: AppSettings;
   onUpdate: (settings: AppSettings) => Promise<void>;
   onThemePreview: (theme: string) => void;
+  onClearHistory: () => void;
 }
 
-export default function SettingsScreen({ settings, onUpdate, onThemePreview }: SettingsScreenProps) {
+export default function SettingsScreen({ settings, onUpdate, onThemePreview, onClearHistory }: SettingsScreenProps) {
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
   const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
@@ -46,13 +47,16 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview }: S
     e.preventDefault();
     try {
       setIsSaving(true);
-      await onUpdate({
+      const updatedSettings: AppSettings = {
         ...settings,
-        baseHourlyRate: parseFloat(baseHourlyRate) || 0,
-        monthlyLimit: parseInt(monthlyLimit) || 0,
+        baseHourlyRate: Number(baseHourlyRate.toString().replace(',', '.')) || 0,
+        monthlyLimit: Number(monthlyLimit.toString().replace(',', '.')) || 0,
         defaultPercentage,
         theme: theme as any,
-      });
+      };
+      
+      console.log('Saving settings:', updatedSettings);
+      await onUpdate(updatedSettings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error: any) {
@@ -79,10 +83,10 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview }: S
               <DollarSign className="w-3 h-3" /> Valor da Hora Base (R$)
             </label>
             <input 
-              type="number" 
-              step="0.01"
+              type="text" 
+              inputMode="decimal"
               value={baseHourlyRate} 
-              onChange={(e) => setBaseHourlyRate(e.target.value)}
+              onChange={(e) => setBaseHourlyRate(e.target.value.replace(/[^0-9,.]/g, ''))}
               className="w-full bg-app-bg border border-app-border p-4 rounded-2xl focus:ring-2 focus:ring-app-accent/10 transition-all outline-none font-bold text-xl text-app-text"
               placeholder="0,00"
             />
@@ -93,9 +97,10 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview }: S
               <Target className="w-3 h-3" /> Limite Mensal (Horas Extras)
             </label>
             <input 
-              type="number" 
+              type="text" 
+              inputMode="numeric"
               value={monthlyLimit} 
-              onChange={(e) => setMonthlyLimit(e.target.value)}
+              onChange={(e) => setMonthlyLimit(e.target.value.replace(/[^0-9]/g, ''))}
               className="w-full bg-app-bg border border-app-border p-4 rounded-2xl focus:ring-2 focus:ring-app-accent/10 transition-all outline-none font-bold text-xl text-app-text"
               placeholder="40"
             />
@@ -152,6 +157,26 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview }: S
           </div>
         </motion.div>
 
+        {/* Action Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-app-card p-6 rounded-3xl space-y-4 shadow-sm border border-app-border"
+        >
+          <div className="flex justify-between items-center border-b border-app-border pb-2 mb-2">
+            <h3 className="text-sm font-bold text-app-text">Ações</h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClearHistory}
+            className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-red-500/5 border border-red-500/10 rounded-2xl hover:bg-red-500 text-red-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest"
+          >
+            <Trash2 className="w-4 h-4" />
+            Limpar Todo Histórico
+          </button>
+        </motion.div>
 
         <motion.button
           initial={{ opacity: 0, scale: 0.95 }}
