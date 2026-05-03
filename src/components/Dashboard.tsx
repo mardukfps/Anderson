@@ -7,9 +7,10 @@ import { Wallet, Clock, TrendingUp, CircleCheck } from 'lucide-react';
 interface DashboardProps {
   entries: OvertimeEntry[];
   settings: AppSettings;
+  onNavigateToSettings?: () => void;
 }
 
-export default function Dashboard({ entries, settings }: DashboardProps) {
+export default function Dashboard({ entries, settings, onNavigateToSettings }: DashboardProps) {
   const stats = useMemo(() => {
     const totalHours = entries.reduce((acc, curr) => acc + curr.calculatedHours, 0);
     const totalValue = entries.reduce((acc, curr) => acc + curr.calculatedValue, 0);
@@ -144,8 +145,11 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
 
       {/* Configuration Alert */}
       {settings.baseHourlyRate === 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 p-5 rounded-3xl flex gap-3 items-center">
-          <Wallet className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+        <button 
+          onClick={onNavigateToSettings}
+          className="w-full text-left bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 p-5 rounded-3xl flex gap-3 items-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all cursor-pointer group"
+        >
+          <Wallet className="w-6 h-6 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
           <div className="flex-1">
             <div className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase">Configuração Pendente</div>
             <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Defina o valor da sua hora base nos Ajustes para calcular o saldo financeiro.</p>
@@ -153,11 +157,11 @@ export default function Dashboard({ entries, settings }: DashboardProps) {
           <motion.div 
             animate={{ x: [0, 5, 0] }} 
             transition={{ repeat: Infinity, duration: 2 }}
-            className="text-blue-500"
+            className="text-blue-500 dark:text-blue-400"
           >
             →
           </motion.div>
-        </div>
+        </button>
       )}
 
       {/* Info Alert */}
