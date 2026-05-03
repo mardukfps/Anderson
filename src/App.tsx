@@ -196,15 +196,6 @@ export default function App() {
     
     // Add theme class
     root.classList.add(settings.theme);
-
-    // Update theme-color meta tag for native bar appearance
-    const metaThemeColor = document.getElementById('theme-color-meta') || document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      let color = '#F8F9FA'; // Default for light
-      if (settings.theme === 'dark') color = '#0A0A0A';
-      if (settings.theme === 'high-contrast') color = '#000000';
-      metaThemeColor.setAttribute('content', color);
-    }
   }, [settings.theme]);
 
   const exportReport = () => {
@@ -220,7 +211,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg font-sans text-app-text pt-[env(safe-area-inset-top)] pb-32 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
+    <div className="min-h-screen bg-app-bg font-sans text-app-text pb-32 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
       {/* Dynamic Content area */}
       <main className="w-full max-w-lg p-5 md:p-8 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
@@ -336,7 +327,7 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-[calc(5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-app-card/90 backdrop-blur-xl border-t border-app-border grid grid-cols-5 items-center px-2 z-50 transition-colors shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)]">
+      <nav className="fixed bottom-0 left-0 right-0 h-20 bg-app-card/90 backdrop-blur-xl border-t border-app-border grid grid-cols-5 items-center px-2 z-50 transition-colors shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)]">
         <NavButton 
           active={activeTab === 'dashboard'} 
           onClick={() => {
