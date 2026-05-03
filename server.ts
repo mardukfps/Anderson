@@ -41,7 +41,6 @@ const deleteEntriesStmt = db.prepare('DELETE FROM entries');
 const deleteSettingsStmt = db.prepare('DELETE FROM settings');
 const insertSettingsStmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
 const fetchEntriesStmt = db.prepare('SELECT * FROM entries ORDER BY date DESC, entryTime DESC');
-const fetchAllEntriesStmt = db.prepare('SELECT * FROM entries');
 const fetchSettingsStmt = db.prepare('SELECT value FROM settings WHERE key = ?');
 const deleteEntryByIdStmt = db.prepare('DELETE FROM entries WHERE id = ?');
 const updateEntryStmt = db.prepare(`
@@ -49,45 +48,6 @@ const updateEntryStmt = db.prepare(`
   SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, percentage = ?, calculatedValue = ?
   WHERE id = ?
 `);
-
-// Optimized Import Transaction
-const importTransaction = db.transaction((backupData) => {
-  if (!backupData || !backupData.data) {
-    console.error('Import transaction: No data provided');
-    return;
-  }
-
-  deleteEntriesStmt.run();
-  deleteSettingsStmt.run();
-
-  const entries = backupData.data.entries;
-  if (entries && Array.isArray(entries)) {
-    console.log(`Importing ${entries.length} entries...`);
-    for (const entry of entries) {
-      try {
-        insertEntryStmt.run(
-          entry.id || Math.random().toString(36).substr(2, 9),
-          entry.type || 'extra',
-          entry.date || new Date().toISOString().split('T')[0],
-          entry.entryTime || '00:00',
-          entry.exitTime || '00:00',
-          entry.calculatedHours || 0,
-          entry.percentage || 0.5,
-          entry.calculatedValue || 0,
-          entry.createdAt || Date.now()
-        );
-      } catch (err) {
-        console.error('Failed to import entry:', entry, err);
-        throw err; // Re-throw to trigger rollback
-      }
-    }
-  }
-
-  if (backupData.data?.settings) {
-    console.log('Importing settings...');
-    insertSettingsStmt.run('app_settings', JSON.stringify(backupData.data.settings));
-  }
-});
 
 async function startServer() {
   const app = express();
@@ -201,45 +161,6 @@ async function startServer() {
     } catch (error) {
       console.error('Error saving settings:', error);
       res.status(500).json({ error: 'Failed to save settings' });
-    }
-  });
-
-  // Backup & Restore
-  app.get('/api/backup', (req, res) => {
-    try {
-      const entries = fetchAllEntriesStmt.all();
-      const settingsRow = fetchSettingsStmt.get('app_settings') as { value: string } | undefined;
-      const settings = settingsRow ? JSON.parse(settingsRow.value) : null;
-      
-      res.json({
-        version: '1.0',
-        exportedAt: new Date().toISOString(),
-        data: {
-          entries,
-          settings
-        }
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to generate backup' });
-    }
-  });
-
-  app.post('/api/backup/import', (req, res) => {
-    console.log('Received backup import request');
-    try {
-      if (!req.body || !req.body.data) {
-        console.error('Invalid backup data received:', req.body);
-        return res.status(400).json({ error: 'Invalid backup data' });
-      }
-      
-      console.log('Starting import transaction...');
-      importTransaction(req.body);
-      console.log('Import transaction completed successfully');
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Import failed:', error);
-      res.status(500).json({ error: 'Failed to import backup' });
     }
   });
 

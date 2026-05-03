@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { AppSettings } from '../types';
 import { 
-  Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2, 
-  Percent, Palette, Moon, Sun, Monitor, Download, Upload, AlertCircle
+  Settings as SettingsIcon, DollarSign, Target, Save, Clock, 
+  Percent, Palette, Moon, Sun, Monitor, AlertCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { apiService } from '../services/api';
@@ -13,21 +13,15 @@ interface SettingsScreenProps {
   settings: AppSettings;
   onUpdate: (settings: AppSettings) => Promise<void>;
   onThemePreview: (theme: string) => void;
-  onClearHistory: () => void;
 }
 
-export default function SettingsScreen({ settings, onUpdate, onThemePreview, onClearHistory }: SettingsScreenProps) {
+export default function SettingsScreen({ settings, onUpdate, onThemePreview }: SettingsScreenProps) {
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
   const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(settings.theme || 'dark');
   const [saved, setSaved] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
-  const [pendingImportData, setPendingImportData] = useState<any>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Apply theme immediately for preview
   React.useEffect(() => {
@@ -61,91 +55,10 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
-      alert('Erro ao salvar configurações.');
+    } catch (error: any) {
+      alert(`Erro ao salvar configurações: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleExport = async () => {
-    try {
-      setExporting(true);
-      const backup = await apiService.exportBackup();
-      const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `jornadaplus_backup_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Erro ao exportar backup');
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handeImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Efficiency: Early exit if file is clearly not JSON or too large (e.g. > 10MB)
-    if (file.type && file.type !== 'application/json' && !file.name.endsWith('.json')) {
-      alert('Por favor, selecione um arquivo .json');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const result = event.target?.result as string;
-        // Basic check before parsing to save resources
-        if (!result.includes('data') || !result.includes('entries')) {
-          throw new Error('Invalid format');
-        }
-
-        const json = JSON.parse(result);
-        if (json.data?.entries && json.data?.settings) {
-          setPendingImportData(json);
-          setShowImportConfirm(true);
-        } else {
-          alert('Arquivo de backup inválido: Faltam dados essenciais.');
-        }
-      } catch (err) {
-        alert('Erro ao processar arquivo: Formato inválido.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = ''; // Reset input to allow same file re-selection
-  };
-
-  const handleConfirmImport = async () => {
-    if (!pendingImportData) return;
-    try {
-      setImporting(true);
-      setShowImportConfirm(false); 
-      
-      const response = await apiService.importBackup(pendingImportData);
-      
-      if (response && response.success) {
-        alert('Importação concluída com sucesso!');
-        window.location.reload();
-      } else {
-        alert('Erro ao importar backup: O servidor não confirmou o sucesso.');
-      }
-    } catch (error) {
-      console.error('Import error:', error);
-      alert('Erro ao importar backup. Verifique o arquivo e tente novamente.');
-    } finally {
-      setImporting(false);
-      setPendingImportData(null);
     }
   };
 
@@ -239,54 +152,6 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
           </div>
         </motion.div>
 
-        {/* Data & Backup Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-app-card p-6 rounded-3xl space-y-4 shadow-sm border border-app-border"
-        >
-          <div className="flex justify-between items-center border-b border-app-border pb-2 mb-2">
-            <h3 className="text-sm font-bold text-app-text">Dados e Backup</h3>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              disabled={exporting}
-              onClick={handleExport}
-              className="flex items-center justify-center gap-2 py-4 bg-app-bg border border-app-border rounded-2xl hover:bg-app-accent/5 transition-all text-app-text font-bold text-xs uppercase tracking-widest"
-            >
-              <Download className={cn("w-4 h-4 text-app-accent", exporting && "animate-bounce")} />
-              {exporting ? '...' : 'Exportar'}
-            </button>
-            <button
-              type="button"
-              disabled={importing}
-              onClick={handeImportClick}
-              className="flex items-center justify-center gap-2 py-4 bg-app-bg border border-app-border rounded-2xl hover:bg-emerald-500/5 transition-all text-app-text font-bold text-xs uppercase tracking-widest"
-            >
-              <Upload className={cn("w-4 h-4 text-emerald-500", importing && "animate-bounce")} />
-              {importing ? '...' : 'Importar'}
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept=".json" 
-              className="hidden" 
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={onClearHistory}
-            className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-red-500/5 border border-red-500/10 rounded-2xl hover:bg-red-500 text-red-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest"
-          >
-            <Trash2 className="w-4 h-4" />
-            Limpar Todo Histórico
-          </button>
-        </motion.div>
 
         <motion.button
           initial={{ opacity: 0, scale: 0.95 }}
@@ -315,19 +180,6 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
           )}
         </motion.button>
       </form>
-
-      <ConfirmationModal 
-        isOpen={showImportConfirm}
-        title="Confirmar Importação?"
-        message="A restauração deste backup irá sobrescrever TODOS os seus dados e configurações atuais. Esta ação não pode ser desfeita."
-        confirmLabel="Sim, Restaurar"
-        isDanger={true}
-        onConfirm={handleConfirmImport}
-        onCancel={() => {
-          setShowImportConfirm(false);
-          setPendingImportData(null);
-        }}
-      />
     </div>
   );
 }

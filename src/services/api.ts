@@ -82,20 +82,4 @@ export const apiService = {
     return response.json();
   },
 
-  // Backup & Restore
-  async exportBackup(): Promise<any> {
-    const response = await fetch(`${API_BASE}/backup`);
-    if (!response.ok) throw new Error('Failed to export backup');
-    return response.json();
-  },
-
-  async importBackup(data: any): Promise<{ success: boolean }> {
-    const response = await fetch(`${API_BASE}/backup/import`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to import backup');
-    return response.json();
-  },
 };
