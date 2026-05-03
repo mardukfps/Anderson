@@ -147,6 +147,14 @@ export default function App() {
     generatePDF(entries, settings);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] dark:bg-[#0A0A0A] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#141414] dark:border-white border-t-transparent dark:border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F5] dark:bg-[#0A0A0A] font-sans text-[#141414] dark:text-gray-100 pb-32 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
       {/* Dynamic Content area */}

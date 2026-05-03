@@ -131,10 +131,13 @@ async function startServer() {
   app.post('/api/settings', (req, res) => {
     try {
       const settings = req.body;
+      console.log('Saving settings:', JSON.stringify(settings));
       const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-      stmt.run('app_settings', JSON.stringify(settings));
+      const result = stmt.run('app_settings', JSON.stringify(settings));
+      console.log('Save result:', result);
       res.json(settings);
     } catch (error) {
+      console.error('Failed to save settings:', error);
       res.status(500).json({ error: 'Failed to save settings' });
     }
   });

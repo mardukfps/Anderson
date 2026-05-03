@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { AppSettings } from '../types';
-import { Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2 } from 'lucide-react';
+import { Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2, Percent } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface SettingsScreenProps {
@@ -13,14 +13,23 @@ interface SettingsScreenProps {
 export default function SettingsScreen({ settings, onUpdate, onClearData }: SettingsScreenProps) {
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
+  const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
   const [saved, setSaved] = useState(false);
+
+  // Sync with prop if it changes (e.g. after initial fetch)
+  React.useEffect(() => {
+    setBaseHourlyRate(settings.baseHourlyRate?.toString() || '0');
+    setMonthlyLimit(settings.monthlyLimit?.toString() || '40');
+    setDefaultPercentage(settings.defaultPercentage || 0.5);
+  }, [settings]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdate({
       ...settings,
       baseHourlyRate: parseFloat(baseHourlyRate) || 0,
-      monthlyLimit: parseInt(monthlyLimit) || 0,
+      monthlyLimit: parseInt(monthlyLimit) || 40,
+      defaultPercentage,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -64,6 +73,32 @@ export default function SettingsScreen({ settings, onUpdate, onClearData }: Sett
               className="w-full bg-gray-50 dark:bg-white/5 border border-transparent p-4 rounded-2xl focus:ring-2 focus:ring-[#141414]/10 dark:focus:ring-white/10 transition-all outline-none font-bold text-xl dark:text-white"
               placeholder="40"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <Percent className="w-3 h-3" /> Porcentagem Padrão (HE)
+            </label>
+            <div className="flex gap-2">
+              {[0.5, 1.0].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setDefaultPercentage(val as 0.5 | 1.0)}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl font-bold transition-all border",
+                    defaultPercentage === val 
+                      ? "bg-[#141414] dark:bg-white text-white dark:text-black border-transparent" 
+                      : "bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 border-gray-100 dark:border-white/5"
+                  )}
+                >
+                  {val === 0.5 ? '50%' : '100%'}
+                </button>
+              ))}
+            </div>
+            <p className="text-[9px] text-gray-400 font-medium italic mt-1">
+              * Valor pré-selecionado ao adicionar novas horas.
+            </p>
           </div>
         </motion.div>
 
