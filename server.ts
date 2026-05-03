@@ -23,6 +23,7 @@ db.exec(`
     calculatedHours REAL NOT NULL,
     multiplier REAL NOT NULL DEFAULT 1.0,
     calculatedValue REAL NOT NULL,
+    notes TEXT,
     createdAt INTEGER NOT NULL
   );
 
@@ -31,6 +32,19 @@ db.exec(`
     value TEXT NOT NULL
   );
 `);
+
+// Migration: Add notes column if it doesn't exist
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(entries)").all() as any[];
+  const hasNotes = tableInfo.some(col => col.name === 'notes');
+
+  if (!hasNotes) {
+    console.log('Migrating entries table: adding notes column');
+    db.exec('ALTER TABLE entries ADD COLUMN notes TEXT');
+  }
+} catch (e) {
+  console.error('Migration error (notes):', e);
+}
 
 // Migration: Rename percentage to multiplier if it exists
 try {
@@ -43,13 +57,13 @@ try {
     db.exec('ALTER TABLE entries RENAME COLUMN percentage TO multiplier');
   }
 } catch (e) {
-  console.error('Migration error:', e);
+  console.error('Migration error (multiplier):', e);
 }
 
 // Pre-prepare statements for performance
 const insertEntryStmt = db.prepare(`
-  INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, multiplier, calculatedValue, createdAt)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, multiplier, calculatedValue, notes, createdAt)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const deleteEntriesStmt = db.prepare('DELETE FROM entries');
@@ -60,7 +74,7 @@ const fetchSettingsStmt = db.prepare('SELECT value FROM settings WHERE key = ?')
 const deleteEntryByIdStmt = db.prepare('DELETE FROM entries WHERE id = ?');
 const updateEntryStmt = db.prepare(`
   UPDATE entries 
-  SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, multiplier = ?, calculatedValue = ?
+  SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, multiplier = ?, calculatedValue = ?, notes = ?
   WHERE id = ?
 `);
 
@@ -96,6 +110,7 @@ async function startServer() {
         entry.calculatedHours,
         entry.multiplier,
         entry.calculatedValue,
+        entry.notes || null,
         entry.createdAt
       );
       res.status(201).json(entry);
@@ -121,6 +136,7 @@ async function startServer() {
         entry.calculatedHours,
         entry.multiplier,
         entry.calculatedValue,
+        entry.notes || null,
         id
       );
       res.json(entry);

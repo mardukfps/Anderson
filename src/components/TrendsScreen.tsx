@@ -122,15 +122,15 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-3xl font-bold tracking-tight text-app-text"
+          className="text-4xl font-extrabold tracking-tight text-app-text"
         >
-          Tendências
+          Relatórios
         </motion.h1>
         <motion.p 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-gray-500 text-sm font-medium uppercase tracking-[0.2em] text-[10px]"
+          className="text-app-muted text-[10px] font-heavy uppercase tracking-[0.25em]"
         >
           ANÁLISE DE DESEMPENHO E GANHOS
         </motion.p>
@@ -141,32 +141,34 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-app-card p-5 rounded-[2rem] border border-app-border shadow-sm flex flex-col gap-1"
+          whileTap={{ scale: 0.98 }}
+          className="bg-app-card p-6 rounded-[2.5rem] border border-app-border shadow-sm flex flex-col gap-1"
         >
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 opacity-70">
             <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
               <Clock className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Média Diária</p>
+            <p className="text-[10px] font-black text-app-muted uppercase tracking-widest leading-none">Média</p>
           </div>
-          <p className="text-2xl font-bold text-app-text tracking-tight">{stats.avgOvertime.toFixed(1)}h</p>
-          <p className="text-[9px] text-app-muted font-medium">HORAS EXTRAS / DIA</p>
+          <p className="text-3xl font-black text-app-text tracking-tighter">{stats.avgOvertime.toFixed(1)}h</p>
+          <p className="text-[9px] text-app-muted font-black uppercase tracking-widest opacity-50">POR REGISTRO</p>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-app-card p-5 rounded-[2rem] border border-app-border shadow-sm flex flex-col gap-1"
+          whileTap={{ scale: 0.98 }}
+          className="bg-app-card p-6 rounded-[2.5rem] border border-app-border shadow-sm flex flex-col gap-1"
         >
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 opacity-70">
             <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
               <Wallet className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Ganhos Totais</p>
+            <p className="text-[10px] font-black text-app-muted uppercase tracking-widest leading-none">Ganhos</p>
           </div>
-          <p className="text-2xl font-bold text-emerald-500 tracking-tight">{formatCurrency(stats.totalEarningAllTime)}</p>
-          <p className="text-[9px] text-app-muted font-medium">SALDO ACUMULADO TOTAL</p>
+          <p className="text-3xl font-black text-emerald-500 tracking-tighter">{formatCurrency(stats.totalEarningAllTime).replace('R$', '').trim()}</p>
+          <p className="text-[9px] text-app-muted font-black uppercase tracking-widest opacity-50">R$ TOTAL GERAL</p>
         </motion.div>
       </div>
 
@@ -174,13 +176,15 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-app-card p-0 rounded-[2.5rem] border border-app-border shadow-sm overflow-hidden"
+        className="bg-app-card p-0 rounded-[3rem] border border-app-border shadow-2xl overflow-hidden"
       >
-        <div className="p-7 pb-0">
-          <h3 className="text-lg font-bold text-app-text tracking-tight uppercase tracking-[0.1em] text-[12px] opacity-40">Desempenho de Ganhos</h3>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-3xl font-black text-emerald-500">{formatCurrency(stats.totalEarningAllTime)}</span>
-            <span className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Histórico Completo</span>
+        <div className="p-8 pb-0">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">Fluxo de Ganhos</span>
+          </div>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-4xl font-black text-app-text tracking-tighter">Histórico</span>
+            <span className="text-sm font-bold text-app-muted opacity-40">Progressivo</span>
           </div>
         </div>
         

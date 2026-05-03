@@ -33,12 +33,14 @@ interface CalendarInputProps {
 
 export default function CalendarInput({ label, value, onChange, error }: CalendarInputProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(parseISO(value));
+  const [viewDate, setViewDate] = useState(value ? parseISO(value) : new Date());
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync view date when value changes or when opening
   useEffect(() => {
-    setViewDate(parseISO(value));
+    if (value) {
+      setViewDate(parseISO(value));
+    }
   }, [value, isOpen]);
 
   // Close when clicking outside
@@ -102,10 +104,10 @@ export default function CalendarInput({ label, value, onChange, error }: Calenda
           </div>
           <div className="flex flex-col items-start">
             <span className="text-[9px] font-black uppercase text-app-muted tracking-tighter leading-none mb-0.5 opacity-60">
-              {format(parseISO(value), 'MMMM yyyy', { locale: ptBR })}
+              {value ? format(parseISO(value), 'MMMM yyyy', { locale: ptBR }) : 'Selecione uma data'}
             </span>
             <span className="font-sans text-lg text-app-text font-bold tracking-tight">
-              {format(parseISO(value), "dd 'de' MMMM", { locale: ptBR })}
+              {value ? format(parseISO(value), "dd 'de' MMMM", { locale: ptBR }) : '---'}
             </span>
           </div>
         </div>

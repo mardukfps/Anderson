@@ -12,6 +12,7 @@ export interface OvertimeEntry {
   calculatedHours: number; // decimal
   multiplier: 1.0 | 2.0;
   calculatedValue: number;
+  notes?: string;
   isNightShift?: boolean;
   createdAt: number;
 }
