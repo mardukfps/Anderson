@@ -27,29 +27,9 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
       entriesByDate[e.date].push(e);
     });
 
-    // 1. Last 7 Days Workload (Hours)
     const today = new Date();
-    const last7Days = eachDayOfInterval({
-      start: subDays(today, 6),
-      end: today
-    }).map(date => {
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const dayEntries = entriesByDate[dateStr] || [];
-      const overtimeHours = dayEntries.reduce((acc, e) => acc + e.calculatedHours, 0);
-      
-      // If there are entries, we assume a full workday was completed + these overtime hours
-      const normalHours = dayEntries.length > 0 ? 8.0 : 0;
-      
-      return {
-        name: format(date, 'eee', { locale: ptBR }),
-        fullDate: format(date, 'dd/MM'),
-        normal: parseFloat(normalHours.toFixed(1)),
-        overtime: parseFloat(overtimeHours.toFixed(1)),
-        total: parseFloat((normalHours + overtimeHours).toFixed(1))
-      };
-    });
 
-    // 2. Average Daily Overtime
+    // 1. Average Daily Overtime
     const totalOvertime = entries.reduce((acc, e) => acc + e.calculatedHours, 0);
     const uniqueDates = new Set(entries.map(e => e.date)).size;
     const avgOvertime = uniqueDates > 0 ? totalOvertime / uniqueDates : 0;
@@ -68,11 +48,17 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
       { name: 'Cartão', value: cartaoValue, color: '#10b981' }
     ].filter(d => d.value > 0);
 
-    // 4. Monthly Progression (Cumulative Earnings)
-    const firstOfMonth = startOfMonth(today);
-    const monthlyData = eachDayOfInterval({
-      start: firstOfMonth,
-      end: today
+    // 4. Full History Progression (Cumulative Earnings)
+    const sortedDates = Object.keys(entriesByDate).sort();
+    if (sortedDates.length === 0) return null;
+
+    const firstDate = parseISO(sortedDates[0]);
+    const lastDate = parseISO(sortedDates[sortedDates.length - 1]);
+    
+    // We want to show every day between the first and last entry to keep the timeline consistent
+    const historyData = eachDayOfInterval({
+      start: firstDate,
+      end: lastDate
     }).map(date => {
       const dateStr = format(date, 'yyyy-MM-dd');
       const dayEntries = entriesByDate[dateStr] || [];
@@ -88,24 +74,30 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
     });
 
     let cumulative = 0;
-    const progressionData = monthlyData.map(d => {
+    const progressionData = historyData.map(d => {
       cumulative += d.earnings;
       return {
         date: d.formattedDate,
-        day: format(d.date, 'eee', { locale: ptBR }),
+        day: d.formattedDate,
         value: parseFloat(cumulative.toFixed(2)),
         dailyEarnings: parseFloat(d.earnings.toFixed(2)),
         dailyHours: parseFloat(d.hours.toFixed(1))
       };
     });
 
-    const totalEarningMonth = monthlyData.reduce((acc, d) => acc + d.earnings, 0);
+    const totalEarningAllTime = entries.reduce((acc, e) => acc + e.calculatedValue, 0);
+    const totalEarningMonth = entries
+      .filter(e => {
+        const d = parseISO(e.date);
+        return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      })
+      .reduce((acc, e) => acc + e.calculatedValue, 0);
 
     return { 
-      last7Days, 
       financialDistribution, 
       progressionData, 
       totalEarningMonth,
+      totalEarningAllTime,
       avgOvertime
     };
   }, [entries, settings]);
@@ -171,10 +163,10 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
             <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
               <Wallet className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Ganhos no Mês</p>
+            <p className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Ganhos Totais</p>
           </div>
-          <p className="text-2xl font-bold text-emerald-500 tracking-tight">{formatCurrency(stats.totalEarningMonth)}</p>
-          <p className="text-[9px] text-app-muted font-medium">SALDO ACUMULADO</p>
+          <p className="text-2xl font-bold text-emerald-500 tracking-tight">{formatCurrency(stats.totalEarningAllTime)}</p>
+          <p className="text-[9px] text-app-muted font-medium">SALDO ACUMULADO TOTAL</p>
         </motion.div>
       </div>
 
@@ -185,54 +177,56 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
         className="bg-app-card p-0 rounded-[2.5rem] border border-app-border shadow-sm overflow-hidden"
       >
         <div className="p-7 pb-0">
-          <h3 className="text-lg font-bold text-app-text tracking-tight uppercase tracking-[0.1em] text-[12px] opacity-40">Desempenho Diário e Ganhos</h3>
+          <h3 className="text-lg font-bold text-app-text tracking-tight uppercase tracking-[0.1em] text-[12px] opacity-40">Desempenho de Ganhos</h3>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-3xl font-black text-emerald-500">{formatCurrency(stats.totalEarningMonth)}</span>
-            <span className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Total no Mês</span>
+            <span className="text-3xl font-black text-emerald-500">{formatCurrency(stats.totalEarningAllTime)}</span>
+            <span className="text-[10px] font-bold text-app-muted uppercase tracking-widest">Histórico Completo</span>
           </div>
         </div>
         
-        <div className="h-[300px] w-full mt-4 pointer-events-none select-none">
+        <div className="h-[300px] w-full mt-4 flex min-w-0 pointer-events-none select-none">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats.progressionData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+            <BarChart data={stats.progressionData} margin={{ top: 25, right: 10, left: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="rgba(148, 163, 184, 0.05)" />
               <XAxis 
                 dataKey="day" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: 'rgba(148, 163, 184, 0.4)', fontSize: 9, fontWeight: 700 }}
-                interval={Math.floor(stats.progressionData.length / 7)}
+                tick={{ fill: 'rgba(148, 163, 184, 0.4)', fontSize: 7, fontWeight: 700 }}
+                interval={Math.max(0, Math.floor(stats.progressionData.length / 8))}
                 dy={10}
               />
               <Bar 
                 dataKey="dailyEarnings" 
                 fill="var(--app-accent)" 
-                radius={[6, 6, 0, 0]}
-                barSize={20}
+                radius={[4, 4, 0, 0]}
               >
                 <LabelList 
-                  dataKey="dailyHours" 
+                  dataKey="dailyEarnings" 
                   position="top" 
                   content={({ x, y, value, width, index }: any) => {
                     const data = stats.progressionData[index];
                     if (!data || data.dailyEarnings === 0) return null;
+                    // Only show labels if there's enough space or if it's the last few entries
+                    if (stats.progressionData.length > 15 && index % Math.floor(stats.progressionData.length / 5) !== 0 && index !== stats.progressionData.length - 1) return null;
+                    
                     return (
                       <g>
                         <text 
                           x={(x as number) + (width as number) / 2} 
                           y={(y as number) - 15} 
                           fill="var(--app-text)" 
-                          fontSize={9} 
+                          fontSize={8} 
                           fontWeight="900" 
                           textAnchor="middle"
                         >
-                          {value}h
+                          {data.dailyHours}h
                         </text>
                         <text 
                           x={(x as number) + (width as number) / 2} 
                           y={(y as number) - 5} 
                           fill="#10b981" 
-                          fontSize={8} 
+                          fontSize={7} 
                           fontWeight="700" 
                           textAnchor="middle"
                         >
@@ -250,85 +244,6 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
 
       {/* Two Column Grid for specialized charts */}
       <div className="grid grid-cols-1 gap-6">
-        {/* Weekly Workload Bar Chart */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-app-card p-7 rounded-[2.5rem] border border-app-border shadow-sm"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-lg font-bold text-app-text tracking-tight">Carga Semanal</h3>
-              <p className="text-xs text-app-muted font-medium">Equilíbrio entre horas normais e extras</p>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-app-muted opacity-30" />
-                  <span className="text-[9px] font-bold text-app-muted uppercase">Normal</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]" />
-                  <span className="text-[9px] font-bold text-app-muted uppercase">Extra</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="h-[220px] w-full pointer-events-none select-none">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.last7Days} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barGap={0}>
-                <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="rgba(148, 163, 184, 0.08)" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: 'rgba(148, 163, 184, 0.5)', fontSize: 10, fontWeight: 700 }}
-                  dy={15}
-                />
-                <YAxis hide domain={[0, 'auto']} padding={{ top: 20 }} />
-                <Bar 
-                  dataKey="normal" 
-                  stackId="a" 
-                  fill="rgba(148, 163, 184, 0.1)" 
-                  radius={[0, 0, 0, 0]} 
-                  barSize={24} 
-                />
-                <Bar 
-                  dataKey="overtime" 
-                  stackId="a" 
-                  fill="#fbbf24" 
-                  radius={[8, 8, 4, 4]} 
-                  barSize={24} 
-                  animationDuration={1500}
-                >
-                  <LabelList 
-                    dataKey="overtime" 
-                    position="top" 
-                    offset={10}
-                    content={({ x, y, value }: any) => {
-                      if (!value || value === 0) return null;
-                      return (
-                        <text 
-                          x={(x as number) + 12} 
-                          y={(y as number) - 10} 
-                          fill="#fbbf24" 
-                          fontSize={10} 
-                          fontWeight="900" 
-                          textAnchor="middle"
-                        >
-                          +{value}h
-                        </text>
-                      );
-                    }}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
         {/* Financial Distribution Donut Chart */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
@@ -343,20 +258,41 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
             </div>
           </div>
           
-          <div className="h-[220px] w-full flex items-center justify-center relative pointer-events-none select-none">
+          <div className="h-[260px] w-full flex items-center justify-center relative pointer-events-none select-none">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 40, bottom: 40, left: 40, right: 40 }}>
                 <Pie
                   data={stats.financialDistribution}
                   cx="50%"
                   cy="50%"
-                  innerRadius={65}
-                  outerRadius={85}
-                  paddingAngle={10}
+                  innerRadius={55}
+                  outerRadius={75}
+                  paddingAngle={8}
                   dataKey="value"
                   stroke="none"
                   animationDuration={1200}
                   cornerRadius={10}
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = outerRadius + 15;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    const data = stats.financialDistribution[index];
+
+                    return (
+                      <text 
+                        x={x} 
+                        y={y} 
+                        fill={data.color} 
+                        textAnchor={x > cx ? 'start' : 'end'} 
+                        dominantBaseline="central"
+                        fontSize={8}
+                        fontWeight="bold"
+                      >
+                        {formatCurrency(value)}
+                      </text>
+                    );
+                  }}
                 >
                   {stats.financialDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -367,8 +303,8 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
             
             {/* Donut Hole Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[9px] font-black text-app-muted uppercase tracking-[0.2em] mb-1">Total Mês</span>
-              <span className="text-xl font-black text-app-text">{formatCurrency(stats.totalEarningMonth)}</span>
+              <span className="text-[8px] font-black text-app-muted uppercase tracking-[0.2em] mb-1">Total Geral</span>
+              <span className="text-lg font-black text-app-text">{formatCurrency(stats.totalEarningAllTime)}</span>
             </div>
           </div>
           

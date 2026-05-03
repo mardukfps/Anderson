@@ -7,10 +7,8 @@ interface ConfirmationModalProps {
   title: string;
   message: string;
   onConfirm: () => void;
-  onCancel: () => void; // This will now be "Secondary Action" (e.g. Discard)
-  onStay?: () => void;   // This will be "Stay/Just Close"
+  onCancel: () => void;
   confirmLabel?: string;
-  cancelLabel?: string;
   isDanger?: boolean;
 }
 
@@ -20,13 +18,9 @@ export default function ConfirmationModal({
   message, 
   onConfirm, 
   onCancel,
-  onStay,
   confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
   isDanger = false
 }: ConfirmationModalProps) {
-  const handleStay = onStay || onCancel;
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -36,7 +30,7 @@ export default function ConfirmationModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={handleStay}
+            onClick={onCancel}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
           />
           
@@ -47,7 +41,7 @@ export default function ConfirmationModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-app-card w-full max-w-sm rounded-[45px] overflow-hidden shadow-2xl pointer-events-auto border border-app-border transition-colors ring-1 ring-white/5"
+              className="bg-app-card w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl pointer-events-auto border border-app-border transition-colors ring-1 ring-white/5"
             >
               <div className="p-8 text-left">
                 <div className="flex justify-between items-start mb-6">
@@ -70,66 +64,43 @@ export default function ConfirmationModal({
                   <motion.button 
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStay();
-                    }} 
-                    className="p-3 text-app-muted hover:bg-app-bg rounded-full transition-colors relative z-[130]"
+                    onClick={onCancel} 
+                    className="p-3 text-app-muted hover:bg-app-bg rounded-full transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </motion.button>
                 </div>
                 
-                <h3 className="text-2xl font-black text-app-text mb-3 tracking-tight">{title}</h3>
-                <p className="text-sm font-medium text-app-muted leading-relaxed opacity-80">
+                <h3 className="text-2xl font-bold text-app-text mb-3 tracking-tight">{title}</h3>
+                <p className="text-base text-app-muted leading-relaxed opacity-80">
                   {message}
                 </p>
               </div>
               
-              <div className="p-6 bg-app-bg/50 backdrop-blur-md flex flex-col gap-3 min-h-min shrink-0">
+              <div className="p-6 bg-app-bg/50 backdrop-blur-md flex gap-4">
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.02, backgroundColor: "var(--app-card)" }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={onCancel}
+                  className="flex-1 py-5 px-4 bg-app-card border border-app-border text-app-muted font-bold uppercase tracking-widest text-[10px] rounded-3xl transition-all shadow-sm"
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
                     onConfirm();
+                    onCancel();
                   }}
-                  className={`w-full py-5 px-4 font-black uppercase tracking-[0.2em] text-[10px] rounded-3xl shadow-xl transition-all relative z-[130] ${
+                  className={`flex-1 py-5 px-4 font-bold uppercase tracking-widest text-[10px] rounded-3xl shadow-xl transition-all ${
                     isDanger 
-                      ? 'bg-red-500 text-white shadow-xl shadow-red-500/20 active:bg-red-600' 
-                      : 'bg-app-accent text-app-accent-text shadow-xl shadow-app-accent/20 active:opacity-90'
+                      ? 'bg-red-500 text-white shadow-red-500/20' 
+                      : 'bg-app-accent text-app-accent-text shadow-app-accent/20'
                   }`}
                 >
                   {confirmLabel}
                 </motion.button>
-
-                <div className="flex gap-3 relative z-[130]">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCancel();
-                    }}
-                    className="flex-1 py-4 px-4 bg-app-card border border-app-border text-app-text font-black uppercase tracking-[0.15em] text-[9px] rounded-2xl transition-all shadow-sm active:bg-app-bg"
-                  >
-                    {cancelLabel}
-                  </motion.button>
-                  
-                  {onStay && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onStay();
-                      }}
-                      className="flex-1 py-4 px-4 bg-transparent text-app-muted font-black uppercase tracking-[0.15em] text-[9px] rounded-2xl transition-all active:opacity-50"
-                    >
-                      Cancelar
-                    </motion.button>
-                  )}
-                </div>
               </div>
             </motion.div>
           </div>
