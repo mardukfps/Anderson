@@ -15,14 +15,20 @@ export interface OvertimeEntry {
   createdAt: number;
 }
 
+export type Theme = 'light' | 'dark' | 'high-contrast';
+
 export interface AppSettings {
   baseHourlyRate: number;
   monthlyLimit: number;
   defaultPercentage: 0.5 | 1.0;
+  theme: Theme;
+  dailyWorkload: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   baseHourlyRate: 0,
   monthlyLimit: 40,
   defaultPercentage: 0.5,
+  theme: 'dark',
+  dailyWorkload: 8.0,
 };

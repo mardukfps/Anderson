@@ -142,6 +142,69 @@ async function startServer() {
     }
   });
 
+  // Backup & Restore
+  app.get('/api/backup', (req, res) => {
+    try {
+      const entries = db.prepare('SELECT * FROM entries').all();
+      const settingsRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_settings');
+      const settings = settingsRow ? JSON.parse(settingsRow.value) : null;
+      
+      res.json({
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        data: {
+          entries,
+          settings
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate backup' });
+    }
+  });
+
+  app.post('/api/backup/import', (req, res) => {
+    const transaction = db.transaction((backupData) => {
+      // Clear existing data
+      db.prepare('DELETE FROM entries').run();
+      db.prepare('DELETE FROM settings').run();
+
+      // Import entries
+      if (backupData.data.entries && Array.isArray(backupData.data.entries)) {
+        const stmt = db.prepare(`
+          INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, percentage, calculatedValue, createdAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        for (const entry of backupData.data.entries) {
+          stmt.run(
+            entry.id,
+            entry.type,
+            entry.date,
+            entry.entryTime,
+            entry.exitTime,
+            entry.calculatedHours,
+            entry.percentage,
+            entry.calculatedValue,
+            entry.createdAt
+          );
+        }
+      }
+
+      // Import settings
+      if (backupData.data.settings) {
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+          .run('app_settings', JSON.stringify(backupData.data.settings));
+      }
+    });
+
+    try {
+      transaction(req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Import failed:', error);
+      res.status(500).json({ error: 'Failed to import backup' });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

@@ -41,7 +41,7 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-3xl font-bold tracking-tight dark:text-white"
+          className="text-3xl font-bold tracking-tight text-app-text"
         >
           Painel GERAL
         </motion.h1>
@@ -60,15 +60,15 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-[#141414] dark:bg-dark-card text-white dark:text-gray-100 rounded-3xl p-6 shadow-xl relative overflow-hidden transition-colors border dark:border-white/5"
+        className="bg-app-card text-app-text rounded-3xl p-6 shadow-xl relative overflow-hidden transition-colors border border-app-border"
       >
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-8">
-            <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
+            <div className="bg-app-accent/10 p-3 rounded-2xl backdrop-blur-sm text-app-accent">
               <Wallet className="w-6 h-6" />
             </div>
             <div className="text-right">
-              <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Saldo TOTAL Acumulado</span>
+              <span className="text-app-muted text-xs font-bold uppercase tracking-widest">Saldo TOTAL Acumulado</span>
               <div className="text-3xl font-bold mt-1 tracking-tight">
                 {formatCurrency(stats.totalValue)}
               </div>
@@ -76,13 +76,13 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
           </div>
           
           {/* Values Breakdown */}
-          <div className="grid grid-cols-2 gap-4 mb-6 border-b border-white/10 pb-6">
+          <div className="grid grid-cols-2 gap-4 mb-6 border-b border-app-border pb-6">
             <div>
-              <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-0.5">Saldo do Ponto</span>
+              <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-0.5">Saldo do Ponto</span>
               <div className="text-lg font-bold">{formatCurrency(stats.pontoValue)}</div>
             </div>
             <div className="text-right">
-              <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-0.5">Saldo do Cartão</span>
+              <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-0.5">Saldo do Cartão</span>
               <div className="text-lg font-bold">{formatCurrency(stats.cartaoValue)}</div>
             </div>
           </div>
@@ -90,18 +90,18 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
           <div className="space-y-4">
             <div className="flex justify-between items-end">
               <div>
-                <span className="text-white/60 text-xs font-bold uppercase tracking-widest block mb-1">Total de Horas</span>
+                <span className="text-app-muted text-xs font-bold uppercase tracking-widest block mb-1">Total de Horas</span>
                 <div className="text-2xl font-mono font-medium">{stats.totalHours.toFixed(1)}h</div>
               </div>
               <div className="text-right">
-                <span className="text-white/60 text-xs font-bold uppercase tracking-widest block mb-1">Meta Mensal</span>
+                <span className="text-app-muted text-xs font-bold uppercase tracking-widest block mb-1">Meta Mensal</span>
                 <div className="text-sm font-semibold">{settings.monthlyLimit}h</div>
               </div>
             </div>
 
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-2 bg-app-accent/10 rounded-full overflow-hidden">
               <motion.div 
-                className="h-full bg-white transition-all duration-1000 ease-out" 
+                className="h-full bg-app-accent transition-all duration-1000 ease-out" 
                 initial={{ width: 0 }}
                 animate={{ width: `${stats.progress}%` }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
@@ -111,8 +111,8 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
         </div>
         
         {/* Decorative elements */}
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
-        <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute -right-10 -top-10 w-40 h-40 bg-app-accent/5 rounded-full blur-3xl opacity-20" />
+        <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-app-accent/5 rounded-full blur-3xl opacity-20" />
       </motion.div>
 
       {/* Grid Stats */}
@@ -121,6 +121,8 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
+          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
         >
           <StatCard 
             icon={<Clock className="w-5 h-5 text-blue-500" />}
@@ -133,6 +135,8 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
+          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
         >
           <StatCard 
             icon={<CircleCheck className="w-5 h-5 text-emerald-500" />}
@@ -180,13 +184,13 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
 
 function StatCard({ icon, label, value, bgColor }: { icon: React.ReactNode, label: string, value: string, bgColor: string }) {
   return (
-    <div className="bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 transition-colors">
-      <div className={cn(bgColor, "w-10 h-10 rounded-xl flex items-center justify-center dark:bg-white/10")}>
+    <div className="bg-app-card p-4 rounded-2xl shadow-sm border border-app-border flex flex-col gap-3 transition-all hover:shadow-md hover:border-app-accent/20 group">
+      <div className={cn(bgColor, "w-10 h-10 rounded-xl flex items-center justify-center opacity-80 group-hover:scale-110 transition-transform")}>
         {icon}
       </div>
       <div>
-        <span className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-wider">{label}</span>
-        <div className="text-xl font-bold tracking-tight dark:text-white">{value}</div>
+        <span className="text-app-muted text-[10px] font-bold uppercase tracking-wider">{label}</span>
+        <div className="text-xl font-bold tracking-tight text-app-text">{value}</div>
       </div>
     </div>
   );

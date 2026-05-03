@@ -1,17 +1,113 @@
 @import "tailwindcss";
 
 @theme {
-  --color-dark-bg: #0A0A0A;
-  --color-dark-card: #141414;
-  --color-dark-border: #1F1F1F;
+  --color-app-bg: var(--app-bg);
+  --color-app-card: var(--app-card);
+  --color-app-text: var(--app-text);
+  --color-app-border: var(--app-border);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-text: var(--app-accent-text);
+  --color-app-muted: var(--app-muted);
 }
 
-@layer base {
-  body {
-    @apply transition-colors duration-300;
-  }
+:root {
+  --app-bg: #F8F9FA;
+  --app-card: #FFFFFF;
+  --app-text: #1A1A1A;
+  --app-border: rgba(0,0,0,0.1);
+  --app-accent: #1A1A1A;
+  --app-accent-text: #FFFFFF;
+  --app-muted: #6C757D;
 }
 
 .dark {
   color-scheme: dark;
+  --app-bg: #0A0A0A;
+  --app-card: #141414;
+  --app-text: #F8F9FA;
+  --app-border: rgba(255,255,255,0.05);
+  --app-accent: #FFFFFF;
+  --app-accent-text: #000000;
+  --app-muted: #9BA3AF;
+}
+
+.high-contrast {
+  color-scheme: dark;
+  --app-bg: #000000;
+  --app-card: #000000;
+  --app-text: #FFFFFF;
+  --app-border: #FFFFFF;
+  --app-accent: #FFFFFF;
+  --app-accent-text: #000000;
+  --app-muted: #FFFFFF;
+}
+
+@layer base {
+  body {
+    @apply transition-colors duration-300 antialiased bg-app-bg text-app-text;
+  }
+}
+
+/* Custom Overrides for High Contrast */
+.high-contrast * {
+  @apply !shadow-none !ring-0;
+  border-color: #FFFFFF !important;
+}
+
+.high-contrast .bg-white,
+.high-contrast .bg-gray-100,
+.high-contrast .bg-gray-50,
+.high-contrast .bg-app-card {
+  @apply !bg-black !border-white !border-2;
+}
+
+.high-contrast button {
+  @apply !border-2 !border-white !bg-black !text-white !rounded-none !opacity-100 hover:!bg-white hover:!text-black transition-colors;
+}
+
+.high-contrast input {
+  @apply !border-2 !border-white !bg-black !text-white !rounded-none !opacity-100 focus:!bg-white focus:!text-black transition-colors;
+}
+
+.high-contrast .text-blue-500,
+.high-contrast .text-emerald-500,
+.high-contrast .text-orange-500,
+.high-contrast .text-red-500,
+.high-contrast .text-app-muted {
+  @apply !text-white underline decoration-[2px] opacity-100;
+}
+
+.high-contrast .bg-app-accent {
+  @apply !bg-white !text-black !border-2 !border-white;
+}
+
+.high-contrast .bg-app-accent-text {
+  @apply !bg-black !text-white;
+}
+
+.high-contrast .border-app-accent-text\/10 {
+  @apply !border-black !border-b-2;
+}
+
+.high-contrast .bg-blue-50,
+.high-contrast .bg-emerald-50,
+.high-contrast .bg-amber-50,
+.high-contrast .bg-red-50 {
+  @apply !bg-black !border-white !border-2 !opacity-100;
+}
+
+.high-contrast .text-blue-500,
+.high-contrast .text-emerald-500,
+.high-contrast .text-amber-600,
+.high-contrast .text-red-500,
+.high-contrast .text-blue-900,
+.high-contrast .text-amber-900,
+.high-contrast .text-red-900 {
+  @apply !text-white !opacity-100;
+}
+
+.high-contrast .border-blue-100,
+.high-contrast .border-amber-200,
+.high-contrast .border-red-100 {
+  @apply !border-white !border-2;
 }

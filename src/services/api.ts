@@ -3,6 +3,7 @@ import { OvertimeEntry, AppSettings } from '../types';
 const API_BASE = '/api';
 
 export const apiService = {
+  // Entries
   async getEntries(): Promise<OvertimeEntry[]> {
     const response = await fetch(`${API_BASE}/entries`);
     if (!response.ok) throw new Error('Failed to fetch entries');
@@ -43,6 +44,7 @@ export const apiService = {
     if (!response.ok) throw new Error('Failed to clear entries');
   },
 
+  // Settings
   async getSettings(): Promise<AppSettings | null> {
     const response = await fetch(`${API_BASE}/settings`);
     if (!response.ok) throw new Error('Failed to fetch settings');
@@ -56,6 +58,23 @@ export const apiService = {
       body: JSON.stringify(settings),
     });
     if (!response.ok) throw new Error('Failed to save settings');
+    return response.json();
+  },
+
+  // Backup & Restore
+  async exportBackup(): Promise<any> {
+    const response = await fetch(`${API_BASE}/backup`);
+    if (!response.ok) throw new Error('Failed to export backup');
+    return response.json();
+  },
+
+  async importBackup(data: any): Promise<{ success: boolean }> {
+    const response = await fetch(`${API_BASE}/backup/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to import backup');
     return response.json();
   },
 };

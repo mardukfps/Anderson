@@ -25,17 +25,22 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
   doc.setFillColor(245, 245, 245);
   doc.rect(15, 35, 180, 25, 'F');
   
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
-  doc.text('TOTAL DE HORAS ACUMULADAS', 20, 45);
-  doc.text('VALOR TOTAL A RECEBER', 110, 45);
+  doc.text('TOTAL DE HORAS', 20, 43);
+  doc.text('GANHO TOTAL ESTIMADO', 80, 43);
   
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setTextColor(20, 20, 20);
-  doc.text(`${totalHours.toFixed(1)}h`, 20, 53);
-  doc.text(formatCurrency(totalValue), 110, 53);
+  doc.text(`${totalHours.toFixed(1)}h`, 20, 52);
+  doc.setTextColor(0, 150, 0);
+  doc.text(formatCurrency(totalValue), 80, 52);
 
-  // Table
+  // Entries Table
+  doc.setFontSize(10);
+  doc.setTextColor(20, 20, 20);
+  doc.text('Histórico de Registros', 15, 75);
+
   const tableData = entries.map(entry => [
     format(parseISO(entry.date), 'dd/MM/yyyy'),
     entry.type === EntryType.PONTO ? 'Ponto Eletrônico' : 'Cartão Manual',
@@ -46,24 +51,12 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
   ]);
 
   autoTable(doc, {
-    startY: 70,
-    head: [['Data', 'Categoria', 'Horário', 'Duração', 'Adicional', 'Valor']],
+    startY: 80,
+    head: [['Data', 'Tipo', 'Horário', 'Duração', 'Adicional', 'Valor']],
     body: tableData,
     theme: 'striped',
-    headStyles: {
-      fillColor: [20, 20, 20],
-      fontSize: 10,
-      fontStyle: 'bold',
-      halign: 'left'
-    },
-    bodyStyles: {
-      fontSize: 9,
-      textColor: [50, 50, 50]
-    },
-    alternateRowStyles: {
-      fillColor: [250, 250, 250]
-    },
-    margin: { top: 70 },
+    headStyles: { fillColor: [20, 20, 20], fontSize: 8 },
+    bodyStyles: { fontSize: 8 },
   });
 
   // Footer text
