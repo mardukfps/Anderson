@@ -19,14 +19,10 @@ export interface AppSettings {
   baseHourlyRate: number;
   monthlyLimit: number;
   defaultPercentage: 0.5 | 1.0;
-  notificationsEnabled: boolean;
-  reminderTime: string; // HH:mm
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   baseHourlyRate: 0,
   monthlyLimit: 40,
   defaultPercentage: 0.5,
-  notificationsEnabled: false,
-  reminderTime: '18:00',
 };

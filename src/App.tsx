@@ -10,15 +10,8 @@ import {
   History, 
   Plus, 
   Settings as SettingsIcon,
-  CircleCheck,
-  TrendingUp,
-  Wallet,
-  Clock,
-  Download,
-  Bell,
-  X
+  Download
 } from 'lucide-react';
-import { useLocalStorage } from './hooks/useLocalStorage';
 import { OvertimeEntry, AppSettings, DEFAULT_SETTINGS, EntryType } from './types';
 import { cn, formatCurrency } from './lib/utils';
 import Dashboard from './components/Dashboard';
@@ -26,36 +19,17 @@ import HistoryList from './components/HistoryList';
 import EntryForm from './components/EntryForm';
 import SettingsScreen from './components/SettingsScreen';
 import { generatePDF } from './lib/pdf-export';
-import { notificationService } from './services/notificationService';
 import ConfirmationModal from './components/ConfirmationModal';
+import { apiService } from './services/api';
 
 type Tab = 'dashboard' | 'history' | 'add' | 'settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [editingEntry, setEditingEntry] = useState<OvertimeEntry | null>(null);
-  const [entries, setEntries] = useLocalStorage<OvertimeEntry[]>('jornada_entries', []);
-  const [settings, setSettings] = useLocalStorage<AppSettings>('jornada_settings', DEFAULT_SETTINGS);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('jornada_theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('jornada_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('jornada_theme', 'light');
-    }
-  }, [isDarkMode]);
-  const [toast, setToast] = useState<{ title: string; message: string; isOpen: boolean }>({
-    title: '',
-    message: '',
-    isOpen: false,
-  });
+  const [entries, setEntries] = useState<OvertimeEntry[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [isLoading, setIsLoading] = useState(true);
 
   // States for custom modals
   const [modalConfig, setModalConfig] = useState<{
@@ -74,38 +48,47 @@ export default function App() {
     onConfirm: () => {},
   });
 
-  // Background checks for notifications
   useEffect(() => {
-    const notifyHandler = (e: any) => {
-      const { title, body } = e.detail;
-      setToast({ title, message: body, isOpen: true });
-      setTimeout(() => setToast(prev => ({ ...prev, isOpen: false })), 5000);
-    };
+    document.documentElement.classList.add('dark');
+    loadInitialData();
+  }, []);
 
-    window.addEventListener('jornada-notify', notifyHandler);
-    
-    notificationService.checkMonthlyLimit(entries, settings);
-    notificationService.checkDailyReminder(entries, settings);
-
-    const interval = setInterval(() => {
-      notificationService.checkDailyReminder(entries, settings);
-    }, 60000);
-
-    return () => {
-      window.removeEventListener('jornada-notify', notifyHandler);
-      clearInterval(interval);
-    };
-  }, [entries, settings]);
-
-  const addEntry = (entry: OvertimeEntry) => {
-    setEntries(prev => [entry, ...prev]);
-    setActiveTab('history');
+  const loadInitialData = async () => {
+    try {
+      const [fetchedEntries, fetchedSettings] = await Promise.all([
+        apiService.getEntries(),
+        apiService.getSettings()
+      ]);
+      setEntries(fetchedEntries);
+      if (fetchedSettings) {
+        setSettings(fetchedSettings);
+      }
+    } catch (error) {
+      console.error('Failed to load initial data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateEntry = (updatedEntry: OvertimeEntry) => {
-    setEntries(prev => prev.map(e => e.id === updatedEntry.id ? updatedEntry : e));
-    setEditingEntry(null);
-    setActiveTab('history');
+  const addEntry = async (entry: OvertimeEntry) => {
+    try {
+      const newEntry = await apiService.addEntry(entry);
+      setEntries(prev => [newEntry, ...prev]);
+      setActiveTab('history');
+    } catch (error) {
+      console.error('Failed to add entry:', error);
+    }
+  };
+
+  const updateEntry = async (updatedEntry: OvertimeEntry) => {
+    try {
+      await apiService.updateEntry(updatedEntry.id, updatedEntry);
+      setEntries(prev => prev.map(e => e.id === updatedEntry.id ? updatedEntry : e));
+      setEditingEntry(null);
+      setActiveTab('history');
+    } catch (error) {
+      console.error('Failed to update entry:', error);
+    }
   };
 
   const deleteEntry = (id: string) => {
@@ -115,8 +98,14 @@ export default function App() {
       message: 'Você tem certeza que deseja excluir este registro de horas extras?',
       confirmLabel: 'Excluir',
       isDanger: true,
-      onConfirm: () => {
-        setEntries(prev => prev.filter(e => e.id !== id));
+      onConfirm: async () => {
+        try {
+          await apiService.deleteEntry(id);
+          setEntries(prev => prev.filter(e => e.id !== id));
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('Failed to delete entry:', error);
+        }
       }
     });
   };
@@ -128,8 +117,14 @@ export default function App() {
       message: 'ATENÇÃO: Isso apagará TODOS os seus registros permanentemente. Esta ação não poderá ser desfeita.',
       confirmLabel: 'Limpar Tudo',
       isDanger: true,
-      onConfirm: () => {
-        setEntries([]);
+      onConfirm: async () => {
+        try {
+          await apiService.clearEntries();
+          setEntries([]);
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('Failed to clear entries:', error);
+        }
       }
     });
   };
@@ -139,8 +134,13 @@ export default function App() {
     setActiveTab('add');
   };
 
-  const updateSettings = (newSettings: AppSettings) => {
-    setSettings(newSettings);
+  const updateSettings = async (newSettings: AppSettings) => {
+    try {
+      const savedSettings = await apiService.saveSettings(newSettings);
+      setSettings(savedSettings);
+    } catch (error) {
+      console.error('Failed to update settings:', error);
+    }
   };
 
   const exportReport = () => {
@@ -230,8 +230,6 @@ export default function App() {
                 settings={settings} 
                 onUpdate={updateSettings} 
                 onClearData={clearEntries}
-                isDarkMode={isDarkMode}
-                onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
               />
             </motion.div>
           )}
@@ -248,7 +246,6 @@ export default function App() {
           }} 
           icon={<LayoutDashboard />} 
           label="Início" 
-          isDarkMode={isDarkMode}
         />
         <NavButton 
           active={activeTab === 'history'} 
@@ -258,7 +255,6 @@ export default function App() {
           }} 
           icon={<History />} 
           label="Histórico" 
-          isDarkMode={isDarkMode}
         />
         <button 
           onClick={() => {
@@ -280,7 +276,6 @@ export default function App() {
           }} 
           icon={<SettingsIcon />} 
           label="Ajustes" 
-          isDarkMode={isDarkMode}
         />
       </nav>
 
@@ -301,48 +296,20 @@ export default function App() {
         onConfirm={modalConfig.onConfirm}
         onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
       />
-
-      {/* Internal Toast Notification */}
-      <AnimatePresence>
-        {toast.isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -100, x: '-50%' }}
-            animate={{ opacity: 1, y: 20, x: '-50%' }}
-            exit={{ opacity: 0, y: -100, x: '-50%' }}
-            className="fixed top-0 left-1/2 z-[200] w-full max-w-[320px]"
-          >
-            <div className="bg-[#141414] text-white p-4 rounded-2xl shadow-2xl border border-white/10 flex gap-3 items-center">
-              <div className="bg-white/10 p-2 rounded-xl">
-                <Bell className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <div className="text-xs font-bold uppercase tracking-widest truncate">{toast.title}</div>
-                <div className="text-[10px] text-white/60 leading-tight line-clamp-2">{toast.message}</div>
-              </div>
-              <button 
-                onClick={() => setToast(prev => ({ ...prev, isOpen: false }))}
-                className="p-1 text-white/30 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
 
-function NavButton({ active, onClick, icon, label, isDarkMode }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, isDarkMode?: boolean }) {
+function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
     <button 
       onClick={onClick}
       className={cn(
         "flex flex-col items-center gap-1 transition-all",
-        active ? (isDarkMode ? "text-white scale-105" : "text-[#141414] scale-105") : "text-gray-400 dark:text-gray-600"
+        active ? "text-white scale-105" : "text-gray-400 dark:text-gray-600"
       )}
     >
-      <div className={cn("p-1 rounded-lg transition-colors", active && (isDarkMode ? "bg-white/10" : "bg-gray-100"))}>
+      <div className={cn("p-1 rounded-lg transition-colors", active && "bg-white/10")}>
         {icon}
       </div>
       <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
