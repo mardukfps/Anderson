@@ -2,8 +2,10 @@
   "name": "Jornada+",
   "short_name": "JornadaPlus",
   "description": "Controle inteligente de horas extras com conversão financeira e relatórios PDF.",
+  "id": "/index.html",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#00a2ff",
   "theme_color": "#00a2ff",
   "icons": [
