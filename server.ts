@@ -21,7 +21,7 @@ db.exec(`
     entryTime TEXT NOT NULL,
     exitTime TEXT NOT NULL,
     calculatedHours REAL NOT NULL,
-    percentage REAL NOT NULL,
+    multiplier REAL NOT NULL DEFAULT 1.0,
     calculatedValue REAL NOT NULL,
     createdAt INTEGER NOT NULL
   );
@@ -32,9 +32,23 @@ db.exec(`
   );
 `);
 
+// Migration: Rename percentage to multiplier if it exists
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(entries)").all() as any[];
+  const hasPercentage = tableInfo.some(col => col.name === 'percentage');
+  const hasMultiplier = tableInfo.some(col => col.name === 'multiplier');
+
+  if (hasPercentage && !hasMultiplier) {
+    console.log('Migrating entries table: renaming percentage to multiplier');
+    db.exec('ALTER TABLE entries RENAME COLUMN percentage TO multiplier');
+  }
+} catch (e) {
+  console.error('Migration error:', e);
+}
+
 // Pre-prepare statements for performance
 const insertEntryStmt = db.prepare(`
-  INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, percentage, calculatedValue, createdAt)
+  INSERT INTO entries (id, type, date, entryTime, exitTime, calculatedHours, multiplier, calculatedValue, createdAt)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
@@ -46,7 +60,7 @@ const fetchSettingsStmt = db.prepare('SELECT value FROM settings WHERE key = ?')
 const deleteEntryByIdStmt = db.prepare('DELETE FROM entries WHERE id = ?');
 const updateEntryStmt = db.prepare(`
   UPDATE entries 
-  SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, percentage = ?, calculatedValue = ?
+  SET type = ?, date = ?, entryTime = ?, exitTime = ?, calculatedHours = ?, multiplier = ?, calculatedValue = ?
   WHERE id = ?
 `);
 
@@ -80,7 +94,7 @@ async function startServer() {
         entry.entryTime,
         entry.exitTime,
         entry.calculatedHours,
-        entry.percentage,
+        entry.multiplier,
         entry.calculatedValue,
         entry.createdAt
       );
@@ -105,7 +119,7 @@ async function startServer() {
         entry.entryTime,
         entry.exitTime,
         entry.calculatedHours,
-        entry.percentage,
+        entry.multiplier,
         entry.calculatedValue,
         id
       );
