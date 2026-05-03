@@ -52,29 +52,39 @@ const updateEntryStmt = db.prepare(`
 
 // Optimized Import Transaction
 const importTransaction = db.transaction((backupData) => {
-  if (!backupData || !backupData.data) return;
+  if (!backupData || !backupData.data) {
+    console.error('Import transaction: No data provided');
+    return;
+  }
 
   deleteEntriesStmt.run();
   deleteSettingsStmt.run();
 
   const entries = backupData.data.entries;
   if (entries && Array.isArray(entries)) {
+    console.log(`Importing ${entries.length} entries...`);
     for (const entry of entries) {
-      insertEntryStmt.run(
-        entry.id,
-        entry.type,
-        entry.date,
-        entry.entryTime,
-        entry.exitTime,
-        entry.calculatedHours,
-        entry.percentage,
-        entry.calculatedValue,
-        entry.createdAt
-      );
+      try {
+        insertEntryStmt.run(
+          entry.id || Math.random().toString(36).substr(2, 9),
+          entry.type || 'extra',
+          entry.date || new Date().toISOString().split('T')[0],
+          entry.entryTime || '00:00',
+          entry.exitTime || '00:00',
+          entry.calculatedHours || 0,
+          entry.percentage || 0.5,
+          entry.calculatedValue || 0,
+          entry.createdAt || Date.now()
+        );
+      } catch (err) {
+        console.error('Failed to import entry:', entry, err);
+        throw err; // Re-throw to trigger rollback
+      }
     }
   }
 
   if (backupData.data?.settings) {
+    console.log('Importing settings...');
     insertSettingsStmt.run('app_settings', JSON.stringify(backupData.data.settings));
   }
 });

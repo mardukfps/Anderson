@@ -11,7 +11,7 @@ import ConfirmationModal from './ConfirmationModal';
 
 interface SettingsScreenProps {
   settings: AppSettings;
-  onUpdate: (settings: AppSettings) => void;
+  onUpdate: (settings: AppSettings) => Promise<void>;
   onThemePreview: (theme: string) => void;
   onClearHistory: () => void;
 }
@@ -20,6 +20,7 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
   const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
+  const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(settings.theme || 'dark');
   const [saved, setSaved] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -47,17 +48,24 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
     setTheme(settings.theme || 'dark');
   }, [settings]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate({
-      ...settings,
-      baseHourlyRate: parseFloat(baseHourlyRate) || 0,
-      monthlyLimit: parseInt(monthlyLimit) || 40,
-      defaultPercentage,
-      theme: theme as any,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      setIsSaving(true);
+      await onUpdate({
+        ...settings,
+        baseHourlyRate: parseFloat(baseHourlyRate) || 0,
+        monthlyLimit: parseInt(monthlyLimit) || 0,
+        defaultPercentage,
+        theme: theme as any,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      alert('Erro ao salvar configurações.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleExport = async () => {
@@ -285,12 +293,26 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
           type="submit"
+          disabled={isSaving}
           className={cn(
             "w-full py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3",
-            saved ? "bg-emerald-500 text-white shadow-emerald-200" : "bg-app-accent text-app-accent-text"
+            saved 
+              ? "bg-emerald-500 text-white shadow-emerald-200" 
+              : isSaving 
+                ? "bg-app-muted text-app-text opacity-50 cursor-not-allowed"
+                : "bg-app-accent text-app-accent-text"
           )}
         >
-          {saved ? "Configurações Salvas!" : <><Save className="w-6 h-6" /> Salvar Preferências</>}
+          {saved ? (
+            "Configurações Salvas!"
+          ) : isSaving ? (
+            "Salvando..."
+          ) : (
+            <>
+              <Save className="w-6 h-6" /> 
+              Salvar Preferências
+            </>
+          )}
         </motion.button>
       </form>
 

@@ -176,12 +176,15 @@ export default function App() {
   };
 
   const updateSettings = async (newSettings: AppSettings) => {
+    console.log('Attempting to update settings:', newSettings);
     try {
       const savedSettings = await apiService.saveSettings(newSettings);
+      console.log('Settings saved successfully:', savedSettings);
       setSettings(savedSettings);
       setPendingTheme(null);
     } catch (error) {
       console.error('Failed to update settings:', error);
+      throw error; // Re-throw to be caught by the caller UI
     }
   };
 
