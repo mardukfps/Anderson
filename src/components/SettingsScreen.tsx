@@ -6,7 +6,6 @@ import {
   Percent, Palette, Moon, Sun, Monitor, AlertCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { apiService } from '../services/api';
 import ConfirmationModal from './ConfirmationModal';
 
 interface SettingsScreenProps {

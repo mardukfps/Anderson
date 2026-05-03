@@ -312,7 +312,9 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-6 text-app-text">Configurações</h1>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold tracking-tight text-app-text">Configurações</h1>
+              </div>
               <SettingsScreen 
                 settings={settings} 
                 onUpdate={updateSettings} 
