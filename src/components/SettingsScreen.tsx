@@ -30,9 +30,7 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
     root.classList.remove('light', 'dark', 'high-contrast');
     root.classList.add(theme);
     
-    if (theme !== settings.theme) {
-      onThemePreview(theme);
-    }
+    onThemePreview(theme);
   }, [theme, settings.theme]);
 
   // Sync with prop if it changes (e.g. after initial fetch)

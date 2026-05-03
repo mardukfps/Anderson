@@ -43,6 +43,7 @@ export default function App() {
     confirmLabel: string;
     isDanger: boolean;
     onConfirm: () => void;
+    onCancel?: () => void;
   }>({
     isOpen: false,
     title: '',
@@ -68,9 +69,8 @@ export default function App() {
           try {
             const updatedSettings = { ...settings, theme: pendingTheme as any };
             await updateSettings(updatedSettings);
-            setPendingTheme(null);
             setModalConfig(prev => ({ ...prev, isOpen: false }));
-            setActiveTab('dashboard'); // Return to initial screen as requested
+            setActiveTab(nextTab); 
           } catch (error) {
             console.error('Failed to apply theme during navigation:', error);
           }
@@ -86,7 +86,7 @@ export default function App() {
           setModalConfig(p => ({ ...p, isOpen: false }));
           // We stay on the current tab (settings) if they don't want to apply
         }
-      } as any);
+      });
       
       return;
     }
@@ -211,16 +211,21 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg font-sans text-app-text pb-32 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
+    <div className="min-h-screen bg-app-bg font-sans text-app-text flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300 overflow-hidden">
+      {/* Safe Area Top */}
+      <div className="safe-top w-full bg-app-bg shrink-0" />
+
       {/* Dynamic Content area */}
-      <main className="w-full max-w-lg p-5 md:p-8 flex-1 flex flex-col">
+      <main className="w-full max-w-lg flex-1 flex flex-col relative overflow-hidden">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div
               key="dashboard"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute inset-0 p-5 pt-2 overflow-y-auto pb-32"
             >
               <Dashboard 
                 entries={entries} 
@@ -236,6 +241,8 @@ export default function App() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute inset-0 p-5 pt-2 overflow-y-auto pb-32"
             >
               <TrendsScreen entries={entries} settings={settings} />
             </motion.div>
@@ -244,31 +251,31 @@ export default function App() {
           {activeTab === 'history' && (
             <motion.div
               key="history"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute inset-0 p-5 pt-2 overflow-y-auto pb-32"
             >
               <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold tracking-tight text-app-text">Histórico</h1>
+                <h1 className="text-3xl font-black tracking-tight text-app-text">Histórico</h1>
                 <div className="flex gap-2">
                   <motion.button 
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={exportReport}
-                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest bg-app-card text-app-text px-4 py-3 rounded-xl shadow-sm hover:border-app-accent/30 transition-all border border-app-border"
+                    className="p-3 rounded-2xl bg-app-card border border-app-border shadow-sm active:bg-app-bg transition-colors"
                   >
-                    <Download className="w-4 h-4 text-app-accent" />
-                    PDF
+                    <Download className="w-5 h-5 text-app-accent" />
                   </motion.button>
                   {entries.length > 0 && (
                     <motion.button 
-                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={clearEntries}
-                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl shadow-sm hover:bg-red-500 hover:text-white transition-all border border-app-border"
+                      className="p-3 rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/20 active:bg-red-600 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Limpar
+                      <Trash2 className="w-5 h-5" />
                     </motion.button>
                   )}
                 </div>
@@ -284,13 +291,23 @@ export default function App() {
           {activeTab === 'add' && (
             <motion.div
               key="add"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="absolute inset-0 p-5 pt-2 bg-app-bg z-40 overflow-y-auto pb-32"
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-6 text-app-text">
-                {editingEntry ? 'Editar Registro' : 'Novo Registro'}
-              </h1>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-black tracking-tight text-app-text">
+                  {editingEntry ? 'Editar' : 'Novo Registro'}
+                </h1>
+                <button 
+                  onClick={() => { setEditingEntry(null); setActiveTab('dashboard'); }} 
+                  className="p-2 text-app-accent font-bold text-sm"
+                >
+                  Cancelar
+                </button>
+              </div>
               <div key={editingEntry ? `edit-${editingEntry.id}` : 'new'}>
                 <EntryForm 
                   onSubmit={editingEntry ? updateEntry : addEntry} 
@@ -308,11 +325,13 @@ export default function App() {
           {activeTab === 'settings' && (
             <motion.div
               key="settings"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute inset-0 p-5 pt-2 overflow-y-auto pb-32"
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-6 text-app-text">Configurações</h1>
+              <h1 className="text-3xl font-black tracking-tight mb-6 text-app-text">Ajustes</h1>
               <SettingsScreen 
                 settings={settings} 
                 onUpdate={updateSettings} 
@@ -325,7 +344,7 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-20 bg-app-card/90 backdrop-blur-xl border-t border-app-border grid grid-cols-5 items-center px-2 z-50 transition-colors shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)]">
+      <nav className="fixed bottom-0 left-0 right-0 h-24 glass border-t border-app-border grid grid-cols-5 items-start pt-3 px-2 z-50 transition-colors shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.05)] safe-bottom">
         <NavButton 
           active={activeTab === 'dashboard'} 
           onClick={() => {
@@ -351,12 +370,12 @@ export default function App() {
               setEditingEntry(null);
               confirmNavigation('add');
             }}
-            whileHover={{ scale: 1.15, rotate: 90 }}
-            whileTap={{ scale: 0.9, y: 0 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             initial={{ y: -20 }}
             animate={{ y: -24 }}
             className={cn(
-              "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all border-4 border-app-bg",
+              "w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all border-4 border-app-bg z-[60]",
               "bg-app-accent text-app-accent-text"
             )}
           >
@@ -384,9 +403,9 @@ export default function App() {
         />
       </nav>
 
-      {/* Footer Credits */}
-      <footer className="mt-auto py-8 text-center px-4">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">
+      {/* Footnote hidden on small screens or adapted */}
+      <footer className="fixed bottom-1 py-1 w-full text-center z-[100] pointer-events-none md:block hidden">
+        <p className="text-[8px] font-bold text-app-muted uppercase tracking-[0.2em] opacity-40">
           Desenvolvido por Anderson Silva
         </p>
       </footer>
@@ -400,8 +419,8 @@ export default function App() {
         isDanger={modalConfig.isDanger}
         onConfirm={modalConfig.onConfirm}
         onCancel={() => {
-          if ((modalConfig as any).onCancel) {
-            (modalConfig as any).onCancel();
+          if (modalConfig.onCancel) {
+            modalConfig.onCancel();
           } else {
             setModalConfig(prev => ({ ...prev, isOpen: false }));
           }
@@ -415,28 +434,28 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
   return (
     <motion.button 
       onClick={onClick}
-      whileTap={{ scale: 0.9 }}
+      whileTap={{ scale: 0.95 }}
       className={cn(
-        "flex flex-col items-center justify-center gap-1.5 py-1 transition-all h-full",
+        "flex flex-col items-center justify-center gap-1 py-1 transition-all h-full",
         active ? "text-app-accent" : "text-app-muted opacity-60"
       )}
     >
       <div className={cn(
-        "p-2 rounded-2xl transition-all duration-300 flex items-center justify-center", 
-        active ? "bg-app-accent/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]" : "bg-transparent"
+        "transition-all duration-300 flex items-center justify-center translate-y-1", 
+        active ? "scale-110" : "scale-100"
       )}>
         {icon}
       </div>
       <span className={cn(
-        "text-[9px] font-bold uppercase tracking-widest transition-all",
-        active ? "opacity-100 scale-110" : "opacity-70 scale-100"
+        "text-[9px] font-bold uppercase tracking-widest transition-all mt-1",
+        active ? "opacity-100" : "opacity-70"
       )}>
         {label}
       </span>
       {active && (
         <motion.div 
           layoutId="nav-pill"
-          className="w-1 h-1 rounded-full bg-app-accent"
+          className="w-1 h-1 rounded-full bg-app-accent shrink-0 mt-0.5"
         />
       )}
     </motion.button>

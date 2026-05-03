@@ -11,24 +11,36 @@
 }
 
 :root {
-  --app-bg: #F8F9FA;
+  --app-bg: #F2F2F7;
   --app-card: #FFFFFF;
-  --app-text: #1A1A1A;
-  --app-border: rgba(0,0,0,0.1);
-  --app-accent: #1A1A1A;
+  --app-text: #000000;
+  --app-border: rgba(0,0,0,0.05);
+  --app-accent: #007AFF;
   --app-accent-text: #FFFFFF;
-  --app-muted: #6C757D;
+  --app-muted: #8E8E93;
 }
 
 .dark {
   color-scheme: dark;
-  --app-bg: #0A0A0A;
-  --app-card: #141414;
-  --app-text: #F8F9FA;
-  --app-border: rgba(255,255,255,0.05);
-  --app-accent: #FFFFFF;
-  --app-accent-text: #000000;
-  --app-muted: #9BA3AF;
+  --app-bg: #000000;
+  --app-card: #1C1C1E;
+  --app-text: #FFFFFF;
+  --app-border: rgba(255,255,255,0.1);
+  --app-accent: #0A84FF;
+  --app-accent-text: #FFFFFF;
+  --app-muted: #8E8E93;
+}
+
+@layer utilities {
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .glass {
+    @apply bg-app-card/80 backdrop-blur-2xl border-app-border;
+  }
 }
 
 .high-contrast {
@@ -44,7 +56,8 @@
 
 @layer base {
   body {
-    @apply transition-colors duration-300 antialiased bg-app-bg text-app-text;
+    @apply transition-colors duration-300 antialiased bg-app-bg text-app-text select-none overflow-x-hidden;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

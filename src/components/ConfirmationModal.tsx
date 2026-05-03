@@ -91,7 +91,6 @@ export default function ConfirmationModal({
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     onConfirm();
-                    onCancel();
                   }}
                   className={`flex-1 py-5 px-4 font-bold uppercase tracking-widest text-[10px] rounded-3xl shadow-xl transition-all ${
                     isDanger 
