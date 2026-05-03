@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { AppSettings } from '../types';
 import { 
@@ -11,62 +11,62 @@ import ConfirmationModal from './ConfirmationModal';
 
 interface SettingsScreenProps {
   settings: AppSettings;
-  onUpdate: (settings: AppSettings) => Promise<void>;
+  onPendingChanges: (settings: AppSettings | null) => void;
   onThemePreview: (theme: string) => void;
   onClearHistory: () => void;
 }
 
-export default function SettingsScreen({ settings, onUpdate, onThemePreview, onClearHistory }: SettingsScreenProps) {
+export default function SettingsScreen({ settings, onPendingChanges, onThemePreview, onClearHistory }: SettingsScreenProps) {
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
   const [defaultPercentage, setDefaultPercentage] = useState<0.5 | 1.0>(settings.defaultPercentage || 0.5);
-  const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(settings.theme || 'dark');
-  const [saved, setSaved] = useState(false);
+
+  // Track if changes are present
+  const isDirty = useMemo(() => {
+    return theme !== settings.theme || 
+           baseHourlyRate !== settings.baseHourlyRate?.toString() || 
+           monthlyLimit !== settings.monthlyLimit?.toString() ||
+           defaultPercentage !== settings.defaultPercentage;
+  }, [theme, baseHourlyRate, monthlyLimit, defaultPercentage, settings]);
 
   // Apply theme immediately for preview
-  React.useEffect(() => {
+  useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark', 'high-contrast');
     root.classList.add(theme);
     
     onThemePreview(theme);
-  }, [theme, settings.theme]);
+  }, [theme]);
 
-  // Sync with prop if it changes (e.g. after initial fetch)
-  React.useEffect(() => {
-    setBaseHourlyRate(settings.baseHourlyRate?.toString() || '0');
-    setMonthlyLimit(settings.monthlyLimit?.toString() || '40');
-    setDefaultPercentage(settings.defaultPercentage || 0.5);
-    setTheme(settings.theme || 'dark');
-  }, [settings]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setIsSaving(true);
-      const updatedSettings: AppSettings = {
+  // Report pending changes to parent
+  useEffect(() => {
+    if (isDirty) {
+      onPendingChanges({
         ...settings,
         baseHourlyRate: Number(baseHourlyRate.toString().replace(',', '.')) || 0,
         monthlyLimit: Number(monthlyLimit.toString().replace(',', '.')) || 0,
         defaultPercentage,
-        theme: theme as any,
-      };
-      
-      console.log('Saving settings:', updatedSettings);
-      await onUpdate(updatedSettings);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (error: any) {
-      alert(`Erro ao salvar configurações: ${error.message || 'Erro desconhecido'}`);
-    } finally {
-      setIsSaving(false);
+        theme: theme as any
+      });
+    } else {
+      onPendingChanges(null);
     }
-  };
+  }, [isDirty, theme, baseHourlyRate, monthlyLimit, defaultPercentage, settings]);
+
+  // Sync with prop if it changes externally
+  useEffect(() => {
+    if (!isDirty) {
+      setBaseHourlyRate(settings.baseHourlyRate?.toString() || '0');
+      setMonthlyLimit(settings.monthlyLimit?.toString() || '40');
+      setDefaultPercentage(settings.defaultPercentage || 0.5);
+      setTheme(settings.theme || 'dark');
+    }
+  }, [settings, isDirty]);
 
   return (
     <div className="space-y-6 pb-12 text-left">
-      <form onSubmit={handleSave} className="space-y-6">
+      <div className="space-y-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -176,33 +176,20 @@ export default function SettingsScreen({ settings, onUpdate, onThemePreview, onC
           </button>
         </motion.div>
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          type="submit"
-          disabled={isSaving}
-          className={cn(
-            "w-full py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3",
-            saved 
-              ? "bg-emerald-500 text-white shadow-emerald-200" 
-              : isSaving 
-                ? "bg-app-muted text-app-text opacity-50 cursor-not-allowed"
-                : "bg-app-accent text-app-accent-text"
-          )}
-        >
-          {saved ? (
-            "Configurações Salvas!"
-          ) : isSaving ? (
-            "Salvando..."
-          ) : (
-            <>
-              <Save className="w-6 h-6" /> 
-              Salvar Preferências
-            </>
-          )}
-        </motion.button>
-      </form>
+        {isDirty && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-app-accent p-6 rounded-3xl text-app-accent-text flex items-center justify-between shadow-xl shadow-app-accent/20"
+          >
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5" />
+              <p className="text-[10px] font-black uppercase tracking-widest leading-none">Alterações pendentes</p>
+            </div>
+            <p className="text-[8px] font-black opacity-70 italic uppercase">Salve ao navegar</p>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,19 +1,21 @@
 {
-  "name": "Jornada+",
-  "short_name": "JornadaPlus",
-  "description": "Controle inteligente de horas extras com conversão financeira e relatórios PDF.",
+  "name": "Jornada+ Extra Tracker",
+  "short_name": "Jornada+",
+  "description": "Controle de horas extras e ganhos para entregadores.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#00a2ff",
-  "theme_color": "#00a2ff",
+  "background_color": "#F2F2F7",
+  "theme_color": "#007AFF",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2382/2382625.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/favicon.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2382/2382625.png",
       "sizes": "512x512",
       "type": "image/png"
     }

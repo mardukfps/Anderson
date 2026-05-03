@@ -32,7 +32,7 @@ export default function App() {
   const [editingEntry, setEditingEntry] = useState<OvertimeEntry | null>(null);
   const [entries, setEntries] = useState<OvertimeEntry[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [pendingTheme, setPendingTheme] = useState<string | null>(null);
+  const [pendingSettings, setPendingSettings] = useState<AppSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // States for custom modals
@@ -41,9 +41,11 @@ export default function App() {
     title: string;
     message: string;
     confirmLabel: string;
+    cancelLabel?: string;
     isDanger: boolean;
     onConfirm: () => void;
     onCancel?: () => void;
+    onStay?: () => void;
   }>({
     isOpen: false,
     title: '',
@@ -58,35 +60,40 @@ export default function App() {
   }, []);
 
   const confirmNavigation = (nextTab: Tab) => {
-    if (activeTab === 'settings' && pendingTheme && pendingTheme !== settings.theme) {
+    if (activeTab === 'settings' && pendingSettings) {
       setModalConfig({
         isOpen: true,
-        title: 'Aplicar Tema?',
-        message: `Você selecionou um novo tema. Deseja aplicar esta alteração antes de sair?`,
-        confirmLabel: 'Sim, aplicar',
+        title: 'Alterações Pendentes',
+        message: 'Você fez mudanças nas configurações. Deseja salvá-las antes de sair?',
+        confirmLabel: 'Salvar e Sair',
+        cancelLabel: 'Sair sem Salvar',
         isDanger: false,
         onConfirm: async () => {
           try {
-            const updatedSettings = { ...settings, theme: pendingTheme as any };
-            await updateSettings(updatedSettings);
+            await updateSettings(pendingSettings);
             setModalConfig(prev => ({ ...prev, isOpen: false }));
+            setEditingEntry(null);
             setActiveTab(nextTab); 
           } catch (error) {
-            console.error('Failed to apply theme during navigation:', error);
+            console.error('Failed to save settings during navigation:', error);
           }
         },
         onCancel: () => {
-          // Revert classes immediately to the saved theme
+          // Discard changes and move
           const root = window.document.documentElement;
           root.classList.remove('light', 'dark', 'high-contrast');
           root.classList.add(settings.theme);
           
-          setPendingTheme(null);
-          setSettings({ ...settings }); // Trigger child effect to reset display theme
+          setPendingSettings(null);
           setModalConfig(p => ({ ...p, isOpen: false }));
-          // We stay on the current tab (settings) if they don't want to apply
+          setEditingEntry(null);
+          setActiveTab(nextTab);
+        },
+        onStay: () => {
+          // Just close modal and stay here
+          setModalConfig(p => ({ ...p, isOpen: false }));
         }
-      });
+      } as any);
       
       return;
     }
@@ -183,7 +190,7 @@ export default function App() {
       const savedSettings = await apiService.saveSettings(newSettings);
       console.log('Settings saved successfully:', savedSettings);
       setSettings(savedSettings);
-      setPendingTheme(null);
+      setPendingSettings(null);
     } catch (error) {
       console.error('Failed to update settings:', error);
       throw error; // Re-throw to be caught by the caller UI
@@ -334,8 +341,10 @@ export default function App() {
               <h1 className="text-3xl font-black tracking-tight mb-6 text-app-text">Ajustes</h1>
               <SettingsScreen 
                 settings={settings} 
-                onUpdate={updateSettings} 
-                onThemePreview={(theme) => setPendingTheme(theme)}
+                onPendingChanges={(changes) => setPendingSettings(changes)}
+                onThemePreview={(theme) => {
+                  // This is just for live preview, no need to set state
+                }}
                 onClearHistory={clearEntries}
               />
             </motion.div>
@@ -416,6 +425,7 @@ export default function App() {
         title={modalConfig.title}
         message={modalConfig.message}
         confirmLabel={modalConfig.confirmLabel}
+        cancelLabel={modalConfig.cancelLabel}
         isDanger={modalConfig.isDanger}
         onConfirm={modalConfig.onConfirm}
         onCancel={() => {
@@ -425,6 +435,7 @@ export default function App() {
             setModalConfig(prev => ({ ...prev, isOpen: false }));
           }
         }}
+        onStay={modalConfig.onStay}
       />
     </div>
   );
