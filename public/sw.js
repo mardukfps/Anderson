@@ -1,10 +1,10 @@
 // Simple service worker to enable PWA installability
 const CACHE_NAME = 'focus-ponto-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',
+  './',
+  './index.html',
+  './manifest.json',
+  './favicon.svg',
 ];
 
 self.addEventListener('install', (event) => {

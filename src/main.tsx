@@ -6,7 +6,8 @@ import './index.css';
 // Registro do Service Worker para PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
+    // Registra o sw.js relativo à localização do main.js
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
       console.error('Service worker registration failed:', err);
     });
   });
