@@ -129,91 +129,98 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-app-card p-5 rounded-[2rem] shadow-sm border border-app-border flex flex-col gap-4 group transition-all hover:shadow-md"
+              whileHover={{ y: -2 }}
+              className="bg-app-card p-4 rounded-3xl shadow-sm border border-app-border flex items-center justify-between group transition-all hover:shadow-md"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm",
-                    entry.type === EntryType.PONTO 
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" 
-                      : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
-                  )}>
-                    {entry.type === EntryType.PONTO ? <Clock className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <div className="text-xs font-black text-app-text tracking-tight">
-                      {format(parseISO(entry.date), "dd 'de' MMMM", { locale: ptBR })}
-                    </div>
-                    <div className={cn(
-                      "text-[9px] font-black uppercase tracking-[0.1em]",
-                      entry.type === EntryType.PONTO ? "text-blue-500" : "text-emerald-500"
-                    )}>
-                      {entry.type === EntryType.PONTO ? 'Ponto Eletrônico' : 'Cartão Manual'}
-                    </div>
-                  </div>
+              <div className="flex items-center gap-4 flex-1">
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0",
+                  entry.type === EntryType.PONTO 
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" 
+                    : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
+                )}>
+                  {entry.type === EntryType.PONTO ? <Clock className="w-6 h-6" /> : <CreditCard className="w-6 h-6" />}
                 </div>
                 
-                <div className="text-right">
-                  <div className="text-xl font-black tracking-tight text-app-text flex items-baseline gap-1 justify-end">
-                    <span className="text-xs opacity-50 font-bold">R$</span>{formatCurrency(entry.calculatedValue).replace('R$', '').trim()}
+                <div className="flex-1 overflow-hidden">
+                  <div className="text-xs font-bold text-app-muted uppercase tracking-widest mb-1 flex items-center gap-1.5 line-clamp-1">
+                    {format(parseISO(entry.date), "dd 'de' MMMM", { locale: ptBR })}
+                    <span className="w-1 h-1 rounded-full bg-app-border" />
+                    <span className={cn(
+                      "text-[9px] font-black leading-none",
+                      entry.type === EntryType.PONTO ? "text-blue-500" : "text-emerald-500"
+                    )}>
+                      {entry.type === EntryType.PONTO ? 'PONTO' : 'CARTÃO'}
+                    </span>
                   </div>
-                  <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                    {formatExactHours(entry.calculatedHours)}
+                  
+                  {entry.notes && (
+                    <div className="flex items-start gap-1.5 mb-1.5 group/note">
+                      <FileText className="w-2.5 h-2.5 text-app-accent mt-0.5 shrink-0" />
+                      <p className="text-[10px] text-app-text font-medium leading-tight line-clamp-2 opacity-80 group-hover/note:opacity-100 transition-opacity">
+                        {entry.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-xs bg-app-bg px-2 py-0.5 rounded-md text-app-text font-bold whitespace-nowrap border border-app-border">
+                      {entry.entryTime} - {entry.exitTime}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
+                      entry.multiplier === 2.0 
+                        ? "bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400" 
+                        : "bg-app-bg text-app-muted border border-app-border"
+                    )}>
+                      {entry.multiplier === 1.0 ? '50%' : '100%'}
+                    </span>
+                    {entry.isNightShift && (
+                      <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                        Noturno
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-app-border/40">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] bg-app-bg px-2 py-1 rounded-lg text-app-text font-black border border-app-border">
-                    {entry.entryTime} - {entry.exitTime}
-                  </span>
-                  <span className={cn(
-                    "text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest",
-                    entry.multiplier === 2.0 
-                      ? "bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400" 
-                      : "bg-app-bg text-app-muted border border-app-border"
-                  )}>
-                    {entry.multiplier === 1.0 ? 'EXTRA 50%' : 'EXTRA 100%'}
-                  </span>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-lg font-bold tracking-tight text-app-text">
+                    {formatCurrency(entry.calculatedValue)}
+                  </div>
+                  <div className="text-[10px] font-bold text-app-muted uppercase tracking-widest">
+                    {formatExactHours(entry.calculatedHours)}
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-1">
+                
+                <div className="flex flex-col gap-2 shrink-0">
                   <motion.button 
-                    whileTap={{ scale: 0.8 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEdit(entry);
                     }}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-app-accent/5 text-app-accent hover:bg-app-accent hover:text-white transition-all shadow-sm"
+                    className="p-1.5 text-app-muted hover:text-app-accent transition-colors"
                     aria-label="Editar"
                   >
                     <Edit3 className="w-4 h-4" />
                   </motion.button>
                   <motion.button 
-                    whileTap={{ scale: 0.8 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(entry.id);
                     }}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                    className="p-1.5 text-app-muted hover:text-red-500 transition-colors"
                     aria-label="Excluir"
                   >
                     <Trash2 className="w-4 h-4" />
                   </motion.button>
                 </div>
               </div>
-
-              {entry.notes && (
-                <div className="bg-app-bg/60 p-3 rounded-2xl flex items-start gap-2 border border-app-border/40">
-                  <FileText className="w-3 h-3 text-app-accent mt-0.5 shrink-0 opacity-50" />
-                  <p className="text-[10px] text-app-muted font-bold leading-relaxed">
-                    {entry.notes}
-                  </p>
-                </div>
-              )}
             </motion.div>
           ))
         )}

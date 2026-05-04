@@ -21,6 +21,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
   const [entryTime, setEntryTime] = useState(initialEntry?.entryTime || '08:00');
   const [exitTime, setExitTime] = useState(initialEntry?.exitTime || '18:00');
   const [multiplier, setMultiplier] = useState<1.0 | 2.0>(initialEntry?.multiplier || settings.defaultMultiplier || 1.0);
+  const [notes, setNotes] = useState(initialEntry?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ date?: boolean; entryTime?: boolean; exitTime?: boolean }>({});
 
@@ -63,6 +64,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
         multiplier,
         calculatedHours: stats.calculatedHours,
         calculatedValue: stats.calculatedValue,
+        notes,
         isNightShift: stats.isNightShift,
         createdAt: initialEntry?.createdAt || Date.now(),
       };
@@ -195,72 +197,81 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
           </div>
         </div>
 
+        {/* Notes Input */}
+        <div className="space-y-3">
+          <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
+            <PlusCircle className="w-3 h-3" /> Observações (Opcional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Ex: Reunião de emergência, Deploy produção..."
+            className="w-full bg-app-card border border-app-border rounded-[24px] p-4 text-sm text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent min-h-[100px] resize-none transition-all"
+          />
+        </div>
       </div>
 
-       {/* Summary Card */}
+      {/* Summary Card */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-app-card p-7 rounded-[3rem] space-y-6 shadow-2xl border border-app-border relative overflow-hidden"
+        className="bg-app-card p-6 rounded-[32px] space-y-4 shadow-xl border border-app-border relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 p-8 opacity-[0.05] pointer-events-none text-app-accent">
-          <Clock className="w-32 h-32" />
+        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+          <PlusCircle className="w-32 h-32" />
         </div>
         
-        <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <span className="text-app-muted text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">ESTIMATIVA</span>
-            <div className="text-4xl font-black tracking-tighter text-app-accent flex items-baseline gap-1">
-              <span className="text-lg opacity-40">R$</span>{formatCurrency(stats.calculatedValue).replace('R$', '').trim()}
-            </div>
-          </div>
-          <div className="bg-emerald-500/10 p-4 rounded-[2rem] border border-emerald-500/20 text-emerald-600">
-            <Tag className="w-6 h-6" />
+        <div className="flex justify-between items-center border-b border-app-border pb-4">
+          <span className="text-app-muted text-xs font-bold uppercase tracking-widest">Resumo do Lançamento</span>
+          <div className="p-2 bg-app-accent/10 rounded-xl text-app-accent">
+            <Tag className="w-4 h-4" />
           </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-app-border/40 relative z-10">
+        <div className="grid grid-cols-2 gap-4 relative z-10">
           <div>
-            <span className="text-app-muted text-[9px] font-black uppercase tracking-widest block mb-1 opacity-60">Duração</span>
-            <div className="text-xl font-black text-app-text tracking-tight">
+            <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Duração Total</span>
+            <div className="text-2xl font-mono text-app-text font-bold leading-none">
               {formatExactHours(stats.realHours)}
             </div>
-          </div>
-          <div className="text-right">
-            <span className="text-app-muted text-[9px] font-black uppercase tracking-widest block mb-1 opacity-60">Adicional</span>
-            <div className={cn(
-              "text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest inline-block",
-              multiplier === 2.0 
-                ? "bg-orange-100 text-orange-600" 
-                : "bg-app-accent/10 text-app-accent"
-            )}>
-              {multiplier === 1.0 ? 'EXTRA 50%' : 'EXTRA 100%'}
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="px-1.5 py-0.5 rounded-md bg-app-accent/10 text-app-accent text-[9px] font-black uppercase">
+                {multiplier === 1.0 ? 'Hora Extra 50%' : 'Hora Extra 100%'}
+              </span>
             </div>
+          </div>
+          <div className="text-right flex flex-col justify-end">
+            <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Valor Total ({multiplier === 1.0 ? '50%' : '100%'})</span>
+            <div className="text-2xl font-bold text-app-accent leading-none">
+              {formatCurrency(stats.calculatedValue)}
+            </div>
+            <span className="text-[9px] text-app-muted font-medium mt-1">
+              Base: {formatCurrency(settings?.baseHourlyRate || 0)}/h
+            </span>
           </div>
         </div>
       </motion.div>
 
-      <div className="flex flex-col gap-3">
-        <motion.button
-          type="submit"
-          whileTap={!isSubmitting ? { scale: 0.95 } : {}}
-          disabled={isSubmitting}
-          className="w-full bg-app-accent text-app-accent-text py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-xl shadow-app-accent/20 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-xs"
-        >
-          {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-6 h-6 outline-none" />}
-          {initialEntry ? 'Salvar Alterações' : 'Confirmar Registro'}
-        </motion.button>
-        
+      <div className="flex gap-4">
         {onCancel && (
           <motion.button
             type="button"
             whileTap={{ scale: 0.95 }}
             onClick={onCancel}
-            className="w-full bg-transparent text-app-muted py-4 rounded-3xl font-black uppercase tracking-widest transition-all text-[9px] opacity-60 hover:opacity-100"
+            className="flex-1 bg-app-card text-app-text py-5 rounded-3xl font-bold uppercase tracking-widest shadow-sm hover:bg-app-bg transition-all border border-app-border text-[10px]"
           >
-            Cancelar e Voltar
+            Voltar
           </motion.button>
         )}
+        <motion.button
+          type="submit"
+          whileHover={!isSubmitting ? { scale: 1.02, y: -2 } : {}}
+          whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+          disabled={isSubmitting}
+          className="flex-[2] bg-app-accent text-app-accent-text py-5 rounded-3xl font-bold uppercase tracking-widest shadow-lg shadow-app-accent/20 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-[10px]"
+        >
+          {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
+          {initialEntry ? 'Salvar Alterações' : 'Registrar Agora'}
+        </motion.button>
       </div>
     </form>
   );

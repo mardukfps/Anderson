@@ -211,9 +211,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg font-sans text-app-text pb-24 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300 overflow-x-hidden">
+    <div className="min-h-screen bg-app-bg font-sans text-app-text pb-32 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
       {/* Dynamic Content area */}
-      <main className="w-full max-w-lg px-4 pt-4 md:px-8 md:pt-8 flex-1 flex flex-col">
+      <main className="w-full max-w-lg p-5 md:p-8 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div
