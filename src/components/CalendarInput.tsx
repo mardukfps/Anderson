@@ -22,7 +22,7 @@ import {
   isToday
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '../lib/utils';
+import { cn, getBrazilDate } from '../lib/utils';
 
 interface CalendarInputProps {
   label: string;
@@ -33,7 +33,7 @@ interface CalendarInputProps {
 
 export default function CalendarInput({ label, value, onChange, error }: CalendarInputProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(value ? parseISO(value) : new Date());
+  const [viewDate, setViewDate] = useState(value ? parseISO(value) : parseISO(getBrazilDate()));
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync view date when value changes or when opening
@@ -163,9 +163,10 @@ export default function CalendarInput({ label, value, onChange, error }: Calenda
               {/* Days Grid */}
               <div className="grid grid-cols-7 gap-1">
                 {days.map((day, idx) => {
-                  const isSelected = isSameDay(day, parseISO(value));
+                  const dayString = format(day, 'yyyy-MM-dd');
+                  const isSelected = value === dayString;
                   const isCurrentMonth = isSameMonth(day, monthStart);
-                  const isTodayActive = isToday(day);
+                  const isTodayActive = getBrazilDate() === dayString;
 
                   return (
                     <button
@@ -194,7 +195,7 @@ export default function CalendarInput({ label, value, onChange, error }: Calenda
             <div className="bg-app-bg/50 p-3 border-t border-app-border flex justify-between items-center">
               <button
                 type="button"
-                onClick={() => handleDateSelect(new Date())}
+                onClick={() => handleDateSelect(parseISO(getBrazilDate()))}
                 className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-app-accent hover:bg-app-accent/5 rounded-lg transition-all"
               >
                 Hoje

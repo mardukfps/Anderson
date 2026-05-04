@@ -49,3 +49,20 @@ export function formatCurrency(value: number): string {
     currency: 'BRL',
   }).format(value);
 }
+
+/**
+ * Retorna a data atual no fuso horário de Brasília (UTC-3) no formato YYYY-MM-DD.
+ * Isso garante que a virada do dia ocorra exatamente à meia-noite de Brasília.
+ */
+export function getBrazilDate(): string {
+  const now = new Date();
+  // Brasília é UTC-3. 
+  // O método toLocaleDateString com o timeZone correto é a forma mais robusta.
+  const formatter = new Intl.DateTimeFormat('sv-SE', { // sv-SE usa formato ISO YYYY-MM-DD
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  return formatter.format(now);
+}

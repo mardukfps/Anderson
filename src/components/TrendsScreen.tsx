@@ -9,7 +9,7 @@ import { ptBR } from 'date-fns/locale';
 import { OvertimeEntry, EntryType, AppSettings } from '../types';
 import { calculateEntryPerformance } from '../lib/calculations';
 import { TrendingUp, Clock, Wallet, Calendar } from 'lucide-react';
-import { cn, formatCurrency } from '../lib/utils';
+import { cn, formatCurrency, getBrazilDate } from '../lib/utils';
 
 interface TrendsScreenProps {
   entries: OvertimeEntry[];
@@ -27,7 +27,7 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
       entriesByDate[e.date].push(e);
     });
 
-    const today = new Date();
+    const brazilToday = parseISO(getBrazilDate());
 
     // 1. Average Daily Overtime
     const totalOvertime = entries.reduce((acc, e) => acc + e.calculatedHours, 0);
@@ -89,7 +89,7 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
     const totalEarningMonth = entries
       .filter(e => {
         const d = parseISO(e.date);
-        return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+        return d.getMonth() === brazilToday.getMonth() && d.getFullYear() === brazilToday.getFullYear();
       })
       .reduce((acc, e) => acc + e.calculatedValue, 0);
 

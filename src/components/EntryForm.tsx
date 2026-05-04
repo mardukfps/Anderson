@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { OvertimeEntry, EntryType, AppSettings } from '../types';
 import { calculateEntryPerformance } from '../lib/calculations';
-import { cn, formatExactHours, formatCurrency } from '../lib/utils';
+import { cn, formatExactHours, formatCurrency, getBrazilDate } from '../lib/utils';
 import { Clock, Calendar, Percent, Tag, PlusCircle } from 'lucide-react';
 import TimeInput from './TimeInput';
 
@@ -17,7 +17,7 @@ interface EntryFormProps {
 
 export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }: EntryFormProps) {
   const [type, setType] = useState<EntryType>(initialEntry?.type || EntryType.PONTO);
-  const [date, setDate] = useState(initialEntry?.date || new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(initialEntry?.date || getBrazilDate());
   const [entryTime, setEntryTime] = useState(initialEntry?.entryTime || '08:00');
   const [exitTime, setExitTime] = useState(initialEntry?.exitTime || '18:00');
   const [multiplier, setMultiplier] = useState<1.0 | 2.0>(initialEntry?.multiplier || settings.defaultMultiplier || 1.0);

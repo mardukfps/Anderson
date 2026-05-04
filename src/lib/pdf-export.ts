@@ -1,13 +1,25 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { OvertimeEntry, AppSettings, EntryType } from '../types';
-import { formatCurrency } from './utils';
+import { formatCurrency, getBrazilDate } from './utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
   const doc = new jsPDF();
   const now = new Date();
+  
+  // Format current time in Brazil
+  const brazilTimeStr = now.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  const brazilDateISO = getBrazilDate();
   
   // Header
   doc.setFontSize(22);
@@ -16,7 +28,7 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
   
   doc.setFontSize(10);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Relatório de Horas Extras - Gerado em ${format(now, "dd/MM/yyyy HH:mm")}`, 15, 28);
+  doc.text(`Relatório de Horas Extras - Gerado em ${brazilTimeStr}`, 15, 28);
   
   // Summary Section
   const totalHours = entries.reduce((acc, curr) => acc + curr.calculatedHours, 0);
@@ -76,5 +88,5 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
     );
   }
 
-  doc.save(`relatorio-jornada-${format(now, 'yyyy-MM-dd')}.pdf`);
+  doc.save(`relatorio-jornada-${brazilDateISO}.pdf`);
 }
