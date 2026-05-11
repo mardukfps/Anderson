@@ -81,6 +81,9 @@ export default function App() {
       return;
     }
 
+    // Ensure user profile exists for rules and consistency
+    apiService.ensureUserProfile(user.uid, user.email || '', user.displayName || 'Usuário');
+
     setIsLoading(true);
 
     // Real-time Settings Listener

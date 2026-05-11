@@ -86,7 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      const userId = auth.currentUser?.uid;
       await signOut(auth);
+      if (userId) {
+        import('../services/api').then(({ apiService }) => {
+          apiService.clearCache(userId);
+        });
+      }
     } catch (error) {
       console.error('Error signing out:', error);
     }

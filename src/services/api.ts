@@ -32,7 +32,6 @@ interface FirestoreErrorInfo {
   path: string | null;
   authInfo: {
     userId?: string | null;
-    email?: string | null;
     emailVerified?: boolean | null;
     isAnonymous?: boolean | null;
   }
@@ -43,7 +42,6 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
       userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
       emailVerified: auth.currentUser?.emailVerified,
       isAnonymous: auth.currentUser?.isAnonymous,
     },
@@ -196,4 +194,28 @@ export const apiService = {
     if (!response.ok) throw new Error(data.error || "Erro ao criar assinatura");
     return data;
   },
+
+  // Security & Cache
+  async ensureUserProfile(userId: string, email: string, name: string) {
+    const docRef = doc(db, 'users', userId);
+    try {
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        await setDoc(docRef, {
+          uid: userId,
+          email,
+          name,
+          createdAt: Date.now()
+        });
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error);
+    }
+  },
+
+  clearCache(userId: string) {
+    localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
+    localStorage.removeItem(`${STORAGE_KEY_SETTINGS}_${userId}`);
+    // Clear any other user-specific local storage here
+  }
 };

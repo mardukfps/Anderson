@@ -1,27 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#00a2ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#38b000;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="arrow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff9100;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ffc300;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <!-- Background -->
-  <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#bg-grad)" />
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Ring - Journey and Clock concept -->
+  <circle 
+    cx="50" 
+    cy="50" 
+    r="44" 
+    stroke="#38BDF8" 
+    stroke-width="8" 
+    stroke-linecap="round"
+    stroke-dasharray="220 50"
+    opacity="0.2"
+  />
   
-  <!-- Clock Face -->
-  <circle cx="50" cy="55" r="32" fill="none" stroke="white" stroke-width="5" />
-  <circle cx="50" cy="55" r="2.5" fill="white" />
-  
-  <!-- Orange Arrow -->
-  <path d="M45 75 L75 45 L68 45 M75 45 L75 52" stroke="url(#arrow-grad)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  
-  <!-- Plus Sign -->
-  <g transform="translate(82, 45)">
-    <line x1="-7" y1="0" x2="7" y2="0" stroke="#ffeb3b" stroke-width="5" stroke-linecap="round" />
-    <line x1="0" y1="-7" x2="0" y2="7" stroke="#ffeb3b" stroke-width="5" stroke-linecap="round" />
-  </g>
+  <!-- Active Arc - Progress -->
+  <path
+    d="M15 75 A44 44 0 0 1 50 6"
+    stroke="#38BDF8"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+
+  <!-- Growth Bars - Financial Conversion -->
+  <rect x="30" y="55" width="8" height="15" rx="2" fill="#38BDF8" opacity="0.4" />
+  <rect x="46" y="45" width="8" height="25" rx="2" fill="#38BDF8" opacity="0.7" />
+  <rect x="62" y="32" width="8" height="38" rx="2" fill="#38BDF8" />
+
+  <!-- The Plus Branding -->
+  <path 
+    d="M80 10V30M70 20H90" 
+    stroke="#38BDF8" 
+    stroke-width="12" 
+    stroke-linecap="round" 
+  />
 </svg>

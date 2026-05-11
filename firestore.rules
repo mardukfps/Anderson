@@ -27,6 +27,15 @@ service cloud.firestore {
       return resource.data;
     }
 
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'uid', 'name', 'createdAt'])
+        && data.keys().size() == 4
+        && data.email is string && data.email.size() <= 256
+        && data.name is string && data.name.size() <= 256
+        && data.uid == request.auth.uid
+        && data.createdAt is number;
+    }
+
     // --- Validations ---
     function isValidEntry(data) {
       return data.keys().hasAll(['id', 'type', 'date', 'entryTime', 'exitTime', 'calculatedHours', 'multiplier', 'calculatedValue', 'createdAt', 'userId'])
@@ -59,12 +68,13 @@ service cloud.firestore {
     }
 
     // --- Collection Routes ---
-    match /_connection_test_/{docId} {
-      allow read: if true;
-    }
-
     match /users/{userId} {
-      allow get, create, update: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming())
+        && (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email']))
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt;
       
       match /entries/{entryId} {
         allow list: if isOwner(userId);
