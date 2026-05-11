@@ -17,13 +17,20 @@ export interface OvertimeEntry {
   createdAt: number;
 }
 
-export type Theme = 'light' | 'dark' | 'high-contrast';
+export type Theme = 'light' | 'dark' | 'high-contrast' | 'sky' | 'ruby' | 'emerald' | 'amber';
+
+export type UserPlan = 'free' | 'premium';
 
 export interface AppSettings {
   baseHourlyRate: number;
   monthlyLimit: number;
   defaultMultiplier: 1.0 | 2.0;
   theme: Theme;
+  plan: UserPlan;
+  subscriptionExpiresAt?: number;
+  autoRenew?: boolean;
+  subscriptionStatus?: 'pending' | 'confirmed';
+  baseSalary: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -31,4 +38,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   monthlyLimit: 40,
   defaultMultiplier: 2.0,
   theme: 'dark',
+  plan: 'free',
+  baseSalary: 0,
 };

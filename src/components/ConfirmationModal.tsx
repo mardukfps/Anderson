@@ -9,6 +9,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   confirmLabel?: string;
+  cancelLabel?: string;
   isDanger?: boolean;
 }
 
@@ -19,6 +20,7 @@ export default function ConfirmationModal({
   onConfirm, 
   onCancel,
   confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar",
   isDanger = false
 }: ConfirmationModalProps) {
   return (
@@ -84,7 +86,7 @@ export default function ConfirmationModal({
                   onClick={onCancel}
                   className="flex-1 py-5 px-4 bg-app-card border border-app-border text-app-muted font-bold uppercase tracking-widest text-[10px] rounded-3xl transition-all shadow-sm"
                 >
-                  Cancelar
+                  {cancelLabel}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05, y: -2 }}

@@ -7,8 +7,8 @@ import {
 import { format, subDays, startOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { OvertimeEntry, EntryType, AppSettings } from '../types';
-import { calculateEntryPerformance } from '../lib/calculations';
-import { TrendingUp, Clock, Wallet, Calendar } from 'lucide-react';
+import { calculateEntryPerformance, calculateINSS } from '../lib/calculations';
+import { TrendingUp, Clock, Wallet, Calendar, DollarSign } from 'lucide-react';
 import { cn, formatCurrency, getBrazilDate } from '../lib/utils';
 
 interface TrendsScreenProps {
@@ -18,7 +18,11 @@ interface TrendsScreenProps {
 
 export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
   const stats = useMemo(() => {
-    if (entries.length === 0) return null;
+    if (entries.length === 0 && settings.baseSalary <= 0) return null;
+
+    const brazilToday = parseISO(getBrazilDate());
+    const currentMonth = brazilToday.getMonth();
+    const currentYear = brazilToday.getFullYear();
 
     // Group entries by date for faster lookup
     const entriesByDate: Record<string, OvertimeEntry[]> = {};
@@ -26,8 +30,6 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
       if (!entriesByDate[e.date]) entriesByDate[e.date] = [];
       entriesByDate[e.date].push(e);
     });
-
-    const brazilToday = parseISO(getBrazilDate());
 
     // 1. Average Daily Overtime
     const totalOvertime = entries.reduce((acc, e) => acc + e.calculatedHours, 0);
@@ -48,57 +50,68 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
       { name: 'Cartão', value: cartaoValue, color: '#10b981' }
     ].filter(d => d.value > 0);
 
-    // 4. Full History Progression (Cumulative Earnings)
-    const sortedDates = Object.keys(entriesByDate).sort();
-    if (sortedDates.length === 0) return null;
-
-    const firstDate = parseISO(sortedDates[0]);
-    const lastDate = parseISO(sortedDates[sortedDates.length - 1]);
-    
-    // We want to show every day between the first and last entry to keep the timeline consistent
-    const historyData = eachDayOfInterval({
-      start: firstDate,
-      end: lastDate
-    }).map(date => {
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const dayEntries = entriesByDate[dateStr] || [];
-      const dayEarnings = dayEntries.reduce((acc, e) => acc + e.calculatedValue, 0);
-      const dayHours = dayEntries.reduce((acc, e) => acc + e.calculatedHours, 0);
-
-      return {
-        date,
-        formattedDate: format(date, 'dd/MM'),
-        earnings: dayEarnings,
-        hours: dayHours
-      };
-    });
-
-    let cumulative = 0;
-    const progressionData = historyData.map(d => {
-      cumulative += d.earnings;
-      return {
-        date: d.formattedDate,
-        day: d.formattedDate,
-        value: parseFloat(cumulative.toFixed(2)),
-        dailyEarnings: parseFloat(d.earnings.toFixed(2)),
-        dailyHours: parseFloat(d.hours.toFixed(1))
-      };
-    });
-
-    const totalEarningAllTime = entries.reduce((acc, e) => acc + e.calculatedValue, 0);
-    const totalEarningMonth = entries
+    // 4. Financial Calculations
+    const inss = calculateINSS(settings.baseSalary);
+    const netBaseSalary = settings.baseSalary - inss;
+    const totalExtraMonth = entries
       .filter(e => {
         const d = parseISO(e.date);
-        return d.getMonth() === brazilToday.getMonth() && d.getFullYear() === brazilToday.getFullYear();
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear && e.type === EntryType.PONTO;
       })
       .reduce((acc, e) => acc + e.calculatedValue, 0);
 
+    const totalIncomeMonth = netBaseSalary + totalExtraMonth;
+
+    // 5. Full History Progression (Cumulative Earnings)
+    const sortedDates = Object.keys(entriesByDate).sort();
+    
+    let historyCharts: any[] = [];
+    if (sortedDates.length > 0) {
+      const firstDate = parseISO(sortedDates[0]);
+      const lastDate = parseISO(sortedDates[sortedDates.length - 1]);
+      
+      const historyData = eachDayOfInterval({
+        start: firstDate,
+        end: lastDate
+      }).map(date => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const dayEntries = entriesByDate[dateStr] || [];
+        const dayEarnings = dayEntries.reduce((acc, e) => acc + e.calculatedValue, 0);
+        const dayHours = dayEntries.reduce((acc, e) => acc + e.calculatedHours, 0);
+
+        return {
+          date,
+          formattedDate: format(date, 'dd/MM'),
+          earnings: dayEarnings,
+          hours: dayHours
+        };
+      });
+
+      let cumulative = 0;
+      historyCharts = historyData.map(d => {
+        cumulative += d.earnings;
+        return {
+          date: d.formattedDate,
+          day: d.formattedDate,
+          value: parseFloat(cumulative.toFixed(2)),
+          dailyEarnings: parseFloat(d.earnings.toFixed(2)),
+          dailyHours: parseFloat(d.hours.toFixed(1))
+        };
+      });
+    }
+
+    const totalEarningAllTime = entries.reduce((acc, e) => acc + e.calculatedValue, 0);
+
     return { 
       financialDistribution, 
-      progressionData, 
-      totalEarningMonth,
+      progressionData: historyCharts, 
+      totalEarningMonth: totalExtraMonth,
       totalEarningAllTime,
-      avgOvertime
+      avgOvertime,
+      baseSalary: settings.baseSalary,
+      inss,
+      netBaseSalary,
+      totalIncomeMonth
     };
   }, [entries, settings]);
 
@@ -110,7 +123,7 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
         </div>
         <div className="space-y-1">
           <h3 className="text-xl font-bold text-app-text">Sem dados para análise</h3>
-          <p className="text-sm text-app-muted max-w-[240px] leading-relaxed">Seus gráficos aparecerão aqui assim que você registrar suas primeiras horas extras.</p>
+          <p className="text-sm text-app-muted max-w-[240px] leading-relaxed">Seus gráficos aparecerão aqui assim que você registrar suas primeiras horas extras ou configurar seu salário.</p>
         </div>
       </div>
     );
@@ -135,6 +148,52 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
           ANÁLISE DE DESEMPENHO E GANHOS
         </motion.p>
       </header>
+
+      {/* Salary Summary Card */}
+      {stats.baseSalary > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-app-card p-6 rounded-[2.5rem] border border-app-border shadow-sm overflow-hidden relative group"
+        >
+          <div className="absolute right-0 top-0 w-32 h-32 bg-app-accent/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-app-accent/10 transition-colors" />
+          
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-xl bg-app-accent/10 flex items-center justify-center text-app-accent">
+              <DollarSign className="w-4 h-4" />
+            </div>
+            <h3 className="text-xs font-black text-app-muted uppercase tracking-[0.2em]">Resumo Financeiro Mensal</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center text-xs font-bold text-app-muted">
+                <span className="uppercase tracking-widest">Salário Base</span>
+                <span className="text-app-text">{formatCurrency(stats.baseSalary)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs font-bold text-rose-500/80">
+                <span className="uppercase tracking-widest">Desconto INSS</span>
+                <span>- {formatCurrency(stats.inss)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs font-bold text-emerald-500/80 pt-2 border-t border-app-border/30">
+                <span className="uppercase tracking-widest">Salário Líquido</span>
+                <span>{formatCurrency(stats.netBaseSalary)}</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-3xl bg-app-bg/50 border border-app-border/50 flex flex-col justify-center items-center text-center">
+              <p className="text-[10px] font-black text-app-muted uppercase tracking-[0.2em] mb-1">Total Previsto (Este Mês)</p>
+              <p className="text-3xl font-black text-app-accent tracking-tighter">
+                {formatCurrency(stats.totalIncomeMonth)}
+              </p>
+              <div className="mt-2 flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">
+                <TrendingUp className="w-3 h-3" />
+                <span className="text-[9px] font-bold uppercase tracking-wider">Incluindo HE {formatCurrency(stats.totalEarningMonth)}</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Overview Stats Line */}
       <div className="grid grid-cols-2 gap-4">

@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validations ---
+    function isValidEntry(data) {
+      return data.keys().hasAll(['id', 'type', 'date', 'entryTime', 'exitTime', 'calculatedHours', 'multiplier', 'calculatedValue', 'createdAt', 'userId'])
+        && data.keys().size() <= 12 // Allow optional notes and isNightShift
+        && data.id is string && data.id.size() <= 128
+        && data.type in ['ponto', 'cartao']
+        && data.date is string && data.date.size() == 10
+        && data.entryTime is string && data.entryTime.size() == 5
+        && data.exitTime is string && data.exitTime.size() == 5
+        && data.calculatedHours is number
+        && data.multiplier in [1, 2]
+        && data.calculatedValue is number
+        && data.createdAt is number
+        && data.userId == request.auth.uid;
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll(['baseHourlyRate', 'baseSalary', 'monthlyLimit', 'defaultMultiplier', 'theme', 'plan', 'userId'])
+        && data.keys().size() <= 11
+        && data.baseHourlyRate is number
+        && data.baseSalary is number
+        && data.monthlyLimit is number
+        && (data.defaultMultiplier == 1 || data.defaultMultiplier == 1.0 || data.defaultMultiplier == 2 || data.defaultMultiplier == 2.0)
+        && data.theme in ['light', 'dark', 'high-contrast', 'sky', 'ruby', 'emerald', 'amber']
+        && data.plan in ['free', 'premium']
+        && (data.get('subscriptionExpiresAt', null) == null || data.subscriptionExpiresAt is number)
+        && (data.get('autoRenew', null) == null || data.autoRenew is bool)
+        && (data.get('subscriptionStatus', null) == null || data.subscriptionStatus in ['pending', 'confirmed'])
+        && data.userId == request.auth.uid;
+    }
+
+    // --- Collection Routes ---
+    match /_connection_test_/{docId} {
+      allow read: if true;
+    }
+
+    match /users/{userId} {
+      allow get, create, update: if isOwner(userId);
+      
+      match /entries/{entryId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId) && isValidId(entryId);
+        allow create: if isOwner(userId) && isValidId(entryId) && isValidEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(entryId) && isValidEntry(incoming())
+          && (incoming().diff(existing()).affectedKeys().hasOnly(['type', 'date', 'entryTime', 'exitTime', 'calculatedHours', 'multiplier', 'calculatedValue', 'notes', 'isNightShift']))
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt; // Immutable fields
+        allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+
+      match /settings/config {
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSettings(incoming());
+        allow update: if isOwner(userId) && isValidSettings(incoming())
+          && (incoming().diff(existing()).affectedKeys().hasOnly(['baseHourlyRate', 'baseSalary', 'monthlyLimit', 'defaultMultiplier', 'theme', 'plan', 'subscriptionExpiresAt', 'autoRenew', 'subscriptionStatus']))
+          && incoming().userId == existing().userId;
+      }
+    }
+  }
+}

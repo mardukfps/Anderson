@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
+import { useAuth } from '../hooks/useAuth';
 import { OvertimeEntry, AppSettings, EntryType } from '../types';
 import { formatCurrency, cn, formatExactHours } from '../lib/utils';
-import { Wallet, Clock, TrendingUp, CircleCheck } from 'lucide-react';
+import { Wallet, Clock, CircleCheck, AlertCircle, Mail, TrendingUp } from 'lucide-react';
+import Logo from './Logo';
 
 interface DashboardProps {
   entries: OvertimeEntry[];
@@ -11,6 +13,23 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ entries, settings, onNavigateToSettings }: DashboardProps) {
+  const { user, resendVerification } = useAuth();
+  const [resending, setResending] = React.useState(false);
+  const [resent, setResent] = React.useState(false);
+
+  const handleResend = async () => {
+    try {
+      setResending(true);
+      await resendVerification();
+      setResent(true);
+      setTimeout(() => setResent(false), 5000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setResending(false);
+    }
+  };
+
   const stats = useMemo(() => {
     let totalHours = 0;
     let totalValue = 0;
@@ -39,28 +58,31 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
       pontoValue,
       cartaoHours,
       cartaoValue,
-      progress: Math.min((totalHours / settings.monthlyLimit) * 100, 100),
+      progress: Math.min((totalHours / settings.monthlyLimit) * 100, 100)
     };
   }, [entries, settings]);
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-1">
-        <motion.h1 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="text-3xl font-bold tracking-tight text-app-text"
-        >
-          Painel GERAL
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-gray-500 text-sm font-medium uppercase tracking-[0.2em] text-[10px]"
-        >
-          BEM-VINDO AO JORNADA+
-        </motion.p>
+      <header className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-3xl font-bold tracking-tight text-app-text"
+          >
+            Painel GERAL
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-app-muted text-[10px] font-black uppercase tracking-[0.3em] opacity-60"
+          >
+            BEM-VINDO AO JORNADA<span className="text-app-accent">+</span>
+          </motion.p>
+        </div>
+        <Logo size={40} />
       </header>
 
       {/* Main Card */}
@@ -144,6 +166,28 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
 
       {/* Alerts */}
       <div className="space-y-4">
+        {user && !user.emailVerified && user.providerData.some(p => p.providerId === 'password') && (
+          <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-3xl flex gap-4 items-center">
+            <div className="bg-amber-500/20 p-2.5 rounded-xl">
+              <Mail className="w-5 h-5 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">E-mail Não Verificado</div>
+              <p className="text-[11px] text-app-muted font-bold leading-relaxed">Verifique seu e-mail para garantir a segurança da sua conta.</p>
+            </div>
+            <button 
+              onClick={handleResend}
+              disabled={resending || resent}
+              className={cn(
+                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                resent ? "bg-emerald-500/20 text-emerald-500" : "bg-amber-500 text-white hover:bg-amber-600"
+              )}
+            >
+              {resent ? 'Enviado!' : resending ? 'Enviando...' : 'Reenviar'}
+            </button>
+          </div>
+        )}
+
         {settings.baseHourlyRate === 0 && (
           <button 
             onClick={onNavigateToSettings}

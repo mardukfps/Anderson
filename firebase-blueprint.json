@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "OvertimeEntry": {
+      "title": "Overtime Entry",
+      "description": "A record of overtime hours worked.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["ponto", "cartao"] },
+        "date": { "type": "string", "format": "date" },
+        "entryTime": { "type": "string" },
+        "exitTime": { "type": "string" },
+        "calculatedHours": { "type": "number" },
+        "multiplier": { "type": "number", "enum": [1, 2] },
+        "calculatedValue": { "type": "number" },
+        "notes": { "type": "string" },
+        "isNightShift": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "type", "date", "entryTime", "exitTime", "calculatedHours", "multiplier", "calculatedValue", "createdAt", "userId"]
+    },
+    "AppSettings": {
+      "title": "App Settings",
+      "description": "User preferences and configuration.",
+      "type": "object",
+      "properties": {
+        "baseHourlyRate": { "type": "number" },
+        "baseSalary": { "type": "number" },
+        "monthlyLimit": { "type": "number" },
+        "defaultMultiplier": { "type": "number", "enum": [1, 2] },
+        "theme": { "type": "string", "enum": ["light", "dark", "high-contrast"] },
+        "plan": { "type": "string", "enum": ["free", "premium"] },
+        "subscriptionExpiresAt": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["baseHourlyRate", "baseSalary", "monthlyLimit", "defaultMultiplier", "theme", "plan", "userId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/entries/{entryId}": {
+      "schema": "OvertimeEntry",
+      "description": "Overtime records for a specific user."
+    },
+    "users/{userId}/settings/config": {
+      "schema": "AppSettings",
+      "description": "Personal settings for a specific user."
+    }
+  }
+}

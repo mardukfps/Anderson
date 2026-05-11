@@ -42,9 +42,65 @@
   --app-muted: #FFFFFF;
 }
 
+.sky {
+  color-scheme: dark;
+  --app-bg: #0F172A;
+  --app-card: #1E293B;
+  --app-text: #F8FAFC;
+  --app-border: rgba(56, 189, 248, 0.1);
+  --app-accent: #38BDF8;
+  --app-accent-text: #0F172A;
+  --app-muted: #94A3B8;
+}
+
+.ruby {
+  color-scheme: dark;
+  --app-bg: #1A0B0B;
+  --app-card: #2D1414;
+  --app-text: #FFF5F5;
+  --app-border: rgba(248, 113, 113, 0.1);
+  --app-accent: #F87171;
+  --app-accent-text: #1A0B0B;
+  --app-muted: #FCA5A5;
+}
+
+.emerald {
+  color-scheme: dark;
+  --app-bg: #061A13;
+  --app-card: #0E2E21;
+  --app-text: #ECFDF5;
+  --app-border: rgba(52, 211, 153, 0.1);
+  --app-accent: #34D399;
+  --app-accent-text: #061A13;
+  --app-muted: #A7F3D0;
+}
+
+.amber {
+  color-scheme: dark;
+  --app-bg: #1C1206;
+  --app-card: #31210B;
+  --app-text: #FFFBEB;
+  --app-border: rgba(251, 191, 36, 0.1);
+  --app-accent: #FBBF24;
+  --app-accent-text: #1C1206;
+  --app-muted: #FDE68A;
+}
+
 @layer base {
   body {
     @apply transition-colors duration-300 antialiased bg-app-bg text-app-text;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* PWA Splash screen fix */
+@media (display-mode: standalone) {
+  body {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 }
 

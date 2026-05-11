@@ -1,130 +1,199 @@
-import { OvertimeEntry, AppSettings } from '../types';
+import { OvertimeEntry, AppSettings, DEFAULT_SETTINGS } from '../types';
+import { db, auth } from '../lib/firebase';
+import { 
+  collection, 
+  doc, 
+  getDocs, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where,
+  writeBatch,
+  orderBy
+} from 'firebase/firestore';
 
-const API_BASE = '/api';
+const STORAGE_KEY_ENTRIES = 'jornadaplus_entries';
+const STORAGE_KEY_SETTINGS = 'jornadaplus_settings';
 
-// Helper to check if server is available
-async function isServerAvailable(): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE}/entries`, { method: 'HEAD' });
-    return res.status !== 404; // If 404, it might be a static host without /api
-  } catch {
-    return false;
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
   }
 }
 
-const STORAGE_KEY_ENTRIES = 'focusponto_entries';
-const STORAGE_KEY_SETTINGS = 'focusponto_settings';
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error Detailed: ', JSON.stringify(errInfo, null, 2));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 export const apiService = {
   // Entries
-  async getEntries(): Promise<OvertimeEntry[]> {
+  async getEntries(userId: string): Promise<OvertimeEntry[]> {
+    const path = `users/${userId}/entries`;
     try {
-      const response = await fetch(`${API_BASE}/entries`);
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      // Sync to local storage
-      localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(data));
+      const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => doc.data() as OvertimeEntry);
+      localStorage.setItem(`${STORAGE_KEY_ENTRIES}_${userId}`, JSON.stringify(data));
       return data;
     } catch (error) {
-      console.warn('Using local storage for entries');
-      const local = localStorage.getItem(STORAGE_KEY_ENTRIES);
+      if (error instanceof Error && error.message.includes('permission')) {
+        handleFirestoreError(error, OperationType.LIST, path);
+      }
+      console.error('Error fetching entries:', error);
+      const local = localStorage.getItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
       return local ? JSON.parse(local) : [];
     }
   },
 
-  async addEntry(entry: OvertimeEntry): Promise<OvertimeEntry> {
-    const localEntries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '[]');
-    const updatedEntries = [entry, ...localEntries];
-    localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(updatedEntries));
-
+  async addEntry(userId: string, entry: OvertimeEntry): Promise<OvertimeEntry> {
+    const path = `users/${userId}/entries/${entry.id}`;
     try {
-      const response = await fetch(`${API_BASE}/entries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
+      await setDoc(doc(db, `users/${userId}/entries`, entry.id), {
+        ...entry,
+        userId
       });
-      if (!response.ok) throw new Error();
-      return await response.json();
-    } catch (error) {
-      console.warn('Saved entry locally only');
       return entry;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+      throw error;
     }
   },
 
-  async updateEntry(id: string, entry: OvertimeEntry): Promise<OvertimeEntry> {
-    const localEntries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '[]');
-    const updatedEntries = localEntries.map((e: any) => e.id === id ? entry : e);
-    localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(updatedEntries));
-
+  async updateEntry(userId: string, id: string, entry: OvertimeEntry): Promise<OvertimeEntry> {
+    const path = `users/${userId}/entries/${id}`;
     try {
-      const response = await fetch(`${API_BASE}/entries/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
-      });
-      if (!response.ok) throw new Error();
-      return await response.json();
-    } catch (error) {
-      console.warn('Updated entry locally only');
+      await updateDoc(doc(db, `users/${userId}/entries`, id), { ...entry });
       return entry;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+      throw error;
     }
   },
 
-  async deleteEntry(id: string): Promise<void> {
-    const localEntries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '[]');
-    const updatedEntries = localEntries.filter((e: any) => e.id !== id);
-    localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(updatedEntries));
-
+  async deleteEntry(userId: string, id: string): Promise<void> {
+    const path = `users/${userId}/entries/${id}`;
     try {
-      const response = await fetch(`${API_BASE}/entries/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error();
+      await deleteDoc(doc(db, `users/${userId}/entries`, id));
     } catch (error) {
-      console.warn('Deleted entry locally only');
+      handleFirestoreError(error, OperationType.DELETE, path);
+      throw error;
     }
   },
 
-  async clearEntries(): Promise<void> {
-    localStorage.removeItem(STORAGE_KEY_ENTRIES);
+  async clearEntries(userId: string): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE}/entries`, {
-        method: 'DELETE',
+      const querySnapshot = await getDocs(collection(db, `users/${userId}/entries`));
+      const batch = writeBatch(db);
+      querySnapshot.docs.forEach((d) => {
+        batch.delete(d.ref);
       });
-      if (!response.ok) throw new Error();
+      await batch.commit();
+      localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
     } catch (error) {
-      console.warn('Cleared entries locally only');
+      handleFirestoreError(error, OperationType.WRITE, `users/${userId}/entries`);
+      throw error;
     }
   },
 
   // Settings
-  async getSettings(): Promise<AppSettings | null> {
+  async getSettings(userId: string): Promise<AppSettings | null> {
+    const path = `users/${userId}/settings/config`;
     try {
-      const response = await fetch(`${API_BASE}/settings`);
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      if (data) localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(data));
-      return data;
+      const docRef = doc(db, 'users', userId, 'settings', 'config');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data() as AppSettings;
+        localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(data));
+        return data;
+      }
+      return DEFAULT_SETTINGS;
     } catch (error) {
-      console.warn('Using local storage for settings');
-      const local = localStorage.getItem(STORAGE_KEY_SETTINGS);
-      return local ? JSON.parse(local) : null;
+      if (error instanceof Error && error.message.includes('permission')) {
+        handleFirestoreError(error, OperationType.GET, path);
+      }
+      console.error('Error fetching settings:', error);
+      const local = localStorage.getItem(`${STORAGE_KEY_SETTINGS}_${userId}`);
+      return local ? JSON.parse(local) : DEFAULT_SETTINGS;
     }
   },
 
-  async saveSettings(settings: AppSettings): Promise<AppSettings> {
-    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+  async saveSettings(userId: string, settings: AppSettings): Promise<AppSettings> {
+    const path = `users/${userId}/settings/config`;
     try {
-      const response = await fetch(`${API_BASE}/settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+      await setDoc(doc(db, 'users', userId, 'settings', 'config'), {
+        ...settings,
+        userId
       });
-      if (!response.ok) throw new Error();
-      return await response.json();
-    } catch (error) {
-      console.warn('Saved settings locally only');
+      localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(settings));
       return settings;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
+      throw error;
     }
+  },
+
+  // Mercado Pago
+  async getAuthHeaders() {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Usuário não autenticado");
+    // Forçamos a atualização do token para evitar sessões expiradas em operações críticas
+    const token = await user.getIdToken(true);
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  },
+
+  async createPlan(reason: string, amount: number) {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch('/api/subscription/create-plan', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ reason, amount })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Erro ao criar plano");
+    return data;
+  },
+
+  async subscribe(planId: string, cardTokenId: string, payerEmail: string, reason?: string) {
+    const headers = await this.getAuthHeaders();
+    const response = await fetch('/api/subscription/subscribe', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ planId, cardTokenId, payerEmail, reason })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Erro ao criar assinatura");
+    return data;
   },
 };
