@@ -8,7 +8,7 @@ import Logo from './Logo';
 type AuthMode = 'login' | 'signup';
 
 export default function Login() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithEmail, signUpWithEmail } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
@@ -16,18 +16,6 @@ export default function Login() {
   const [name, setName] = useState('');
   const [error, setError] = useState<React.ReactNode | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await signInWithGoogle();
-    } catch (err: any) {
-      setError(err.message || 'Erro ao entrar com Google');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const validatePassword = (pass: string) => {
     if (authMode === 'signup' && pass.length < 8) return 'A senha deve ter no mínimo 8 caracteres';
@@ -119,7 +107,9 @@ export default function Login() {
         <div className="mb-10 flex flex-col items-center">
           <Logo size={100} className="mb-6" />
           <div className="flex flex-col items-center">
-            <span className="text-app-muted text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Bem-vindo ao</span>
+            <span className="text-app-muted text-[10px] font-black uppercase tracking-[0.3em] opacity-60">
+              {authMode === 'login' ? 'Bem-vindo de volta ao' : 'Junte-se ao'}
+            </span>
             <h1 className="text-2xl font-black tracking-[0.1em] uppercase text-app-text">
               JORNADA<span className="text-app-accent">+</span>
             </h1>
@@ -127,34 +117,6 @@ export default function Login() {
         </div>
 
         <div className="space-y-6">
-          {authMode === 'login' && (
-            <>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
-                className="w-full bg-app-accent text-app-accent-text flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-app-accent/20 disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <>
-                    <Chrome className="w-5 h-5" />
-                    <span>Entrar com Google</span>
-                  </>
-                )}
-              </motion.button>
-
-              <div className="relative flex items-center justify-center py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-app-border"></div>
-                </div>
-                <span className="relative px-3 bg-app-card text-[8px] font-black uppercase text-app-muted tracking-[0.3em]">Ou e-mail</span>
-              </div>
-            </>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <AnimatePresence mode="wait">
               <motion.div

@@ -53,17 +53,13 @@ service cloud.firestore {
     }
 
     function isValidSettings(data) {
-      return data.keys().hasAll(['baseHourlyRate', 'baseSalary', 'monthlyLimit', 'defaultMultiplier', 'theme', 'plan', 'userId'])
-        && data.keys().size() <= 11
+      return data.keys().hasAll(['baseHourlyRate', 'baseSalary', 'monthlyLimit', 'defaultMultiplier', 'theme', 'userId'])
+        && data.keys().size() == 6
         && data.baseHourlyRate is number
         && data.baseSalary is number
         && data.monthlyLimit is number
         && (data.defaultMultiplier == 1 || data.defaultMultiplier == 1.0 || data.defaultMultiplier == 2 || data.defaultMultiplier == 2.0)
         && data.theme in ['light', 'dark', 'high-contrast', 'sky', 'ruby', 'emerald', 'amber']
-        && data.plan in ['free', 'premium']
-        && (data.get('subscriptionExpiresAt', null) == null || data.subscriptionExpiresAt is number)
-        && (data.get('autoRenew', null) == null || data.autoRenew is bool)
-        && (data.get('subscriptionStatus', null) == null || data.subscriptionStatus in ['pending', 'confirmed'])
         && data.userId == request.auth.uid;
     }
 
@@ -91,7 +87,7 @@ service cloud.firestore {
         allow get: if isOwner(userId);
         allow create: if isOwner(userId) && isValidSettings(incoming());
         allow update: if isOwner(userId) && isValidSettings(incoming())
-          && (incoming().diff(existing()).affectedKeys().hasOnly(['baseHourlyRate', 'baseSalary', 'monthlyLimit', 'defaultMultiplier', 'theme', 'plan', 'subscriptionExpiresAt', 'autoRenew', 'subscriptionStatus']))
+          && (incoming().diff(existing()).affectedKeys().hasOnly(['baseHourlyRate', 'baseSalary', 'monthlyLimit', 'defaultMultiplier', 'theme']))
           && incoming().userId == existing().userId;
       }
     }

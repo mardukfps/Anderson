@@ -29,12 +29,10 @@
         "baseSalary": { "type": "number" },
         "monthlyLimit": { "type": "number" },
         "defaultMultiplier": { "type": "number", "enum": [1, 2] },
-        "theme": { "type": "string", "enum": ["light", "dark", "high-contrast"] },
-        "plan": { "type": "string", "enum": ["free", "premium"] },
-        "subscriptionExpiresAt": { "type": "number" },
+        "theme": { "type": "string", "enum": ["light", "dark", "high-contrast", "sky", "ruby", "emerald", "amber"] },
         "userId": { "type": "string" }
       },
-      "required": ["baseHourlyRate", "baseSalary", "monthlyLimit", "defaultMultiplier", "theme", "plan", "userId"]
+      "required": ["baseHourlyRate", "baseSalary", "monthlyLimit", "defaultMultiplier", "theme", "userId"]
     }
   },
   "firestore": {

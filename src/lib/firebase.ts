@@ -1,13 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 // Force non-persistence for debug and ensure database ID is handled correctly
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
-export const googleProvider = new GoogleAuthProvider();
 
 export async function testConnection() {
   try {

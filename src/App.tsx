@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LayoutDashboard, 
@@ -7,26 +7,23 @@ import {
   Settings as SettingsIcon,
   Download,
   TrendingUp,
-  Trash2,
-  Crown
+  Trash2
 } from 'lucide-react';
 import { onSnapshot, collection, doc, query, orderBy } from 'firebase/firestore';
 import { db } from './lib/firebase';
-import { OvertimeEntry, AppSettings, DEFAULT_SETTINGS, EntryType } from './types';
-import { cn, formatCurrency } from './lib/utils';
+import { OvertimeEntry, AppSettings, DEFAULT_SETTINGS } from './types';
+import { cn } from './lib/utils';
 import Dashboard from './components/Dashboard';
 import HistoryList from './components/HistoryList';
 import EntryForm from './components/EntryForm';
 import SettingsScreen from './components/SettingsScreen';
 import TrendsScreen from './components/TrendsScreen';
 import Login from './components/Login';
-import SubscriptionModal from './components/SubscriptionModal';
 import { generatePDF } from './lib/pdf-export';
 import ConfirmationModal from './components/ConfirmationModal';
 import { apiService } from './services/api';
 import { useAuth } from './hooks/useAuth';
 import { testConnection } from './lib/firebase';
-import Logo from './components/Logo';
 
 type Tab = 'dashboard' | 'trends' | 'history' | 'add' | 'settings';
 
@@ -38,7 +35,6 @@ export default function App() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [pendingTheme, setPendingTheme] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
@@ -116,215 +112,7 @@ export default function App() {
     };
   }, [user]);
 
-  const isPremium = settings.plan === 'premium' && (
-    !settings.subscriptionExpiresAt || settings.subscriptionExpiresAt > Date.now()
-  );
-
-  // Auto-downgrade or Auto-renew simulation
-  useEffect(() => {
-    if (user && settings.plan === 'premium' && settings.subscriptionExpiresAt && settings.subscriptionExpiresAt < Date.now()) {
-      if (settings.autoRenew !== false) {
-        // Simulation: Auto-renew for another month if not cancelled
-        const nextMonth = Date.now() + (30 * 24 * 60 * 60 * 1000);
-        apiService.saveSettings(user.uid, { 
-          ...settings, 
-          subscriptionExpiresAt: nextMonth 
-        }).catch(console.error);
-      } else {
-        // Downgrade to free if user cancelled (autoRenew is false)
-        apiService.saveSettings(user.uid, { 
-          ...settings, 
-          plan: 'free', 
-          subscriptionExpiresAt: undefined,
-          autoRenew: undefined 
-        }).catch(console.error);
-      }
-    }
-  }, [user, settings.plan, settings.subscriptionExpiresAt, settings.autoRenew]);
-
-  const showUpgradeModal = (featureName: string) => {
-    setModalConfig({
-      isOpen: true,
-      title: 'Assinar Premium',
-      message: `O recurso "${featureName}" é exclusivo para assinantes Premium. Deseja conhecer nossos planos?`,
-      confirmLabel: 'Conhecer Planos',
-      isDanger: false,
-      onConfirm: () => {
-        setModalConfig(prev => ({ ...prev, isOpen: false }));
-        setIsSubscriptionModalOpen(true);
-      }
-    });
-  };
-
-  const handleUpgrade = async (planType: 'monthly' | 'lifetime' = 'monthly', cardData?: any) => {
-    if (!user) return;
-    try {
-      if (planType === 'monthly' && cardData) {
-        // Monthly Subscription flow
-        const idToken = await user.getIdToken(true);
-        
-        // Use a fixed plan or let server decide. We'll send "monthly" as a hint.
-        // Card Brick provides token in cardData.token
-        const response = await fetch('/api/subscription/subscribe', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          },
-          body: JSON.stringify({
-            planId: 'monthly', // The backend will resolve this or create if needed
-            cardTokenId: cardData.token,
-            payerEmail: user.email,
-            reason: 'Assinatura Jornada+ Premium'
-          }),
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Erro ao processar assinatura');
-        }
-
-        const data = await response.json();
-        
-        if (data.status === 'authorized' || data.status === 'active') {
-          // Success!
-          const expiration = Date.now() + (30 * 24 * 60 * 60 * 1000);
-          const upgradedSettings: AppSettings = { 
-            ...settings, 
-            plan: 'premium' as const,
-            subscriptionExpiresAt: expiration,
-            autoRenew: true,
-            subscriptionStatus: 'confirmed'
-          };
-          
-          await apiService.saveSettings(user.uid, upgradedSettings);
-          setIsSubscriptionModalOpen(false);
-          
-          setModalConfig({
-            isOpen: true,
-            title: '🌟 Assinatura Ativada!',
-            message: 'Sua assinatura mensal foi ativada com sucesso. Aproveite todos os recursos!',
-            confirmLabel: 'Ótimo!',
-            isDanger: false,
-            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-          });
-        }
-        return;
-      }
-
-      // Standard preference flow for lifetime
-      const idToken = await user.getIdToken();
-      const endpoint = '/api/create-payment';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          planType
-        }),
-      });
-      
-      if (response.status === 401 || response.status === 403) {
-        const data = await response.json().catch(() => ({}));
-        if (response.status === 401 && !data.error) {
-          logout();
-          throw new Error('Sessão expirada. Por favor, faça login novamente.');
-        }
-        throw new Error(data.error || 'Acesso negado ou sessão expirada.');
-      }
-
-      const data = await response.json();
-      
-      if (data.init_point) {
-        window.location.href = data.init_point;
-      } else if (data.error) {
-        setModalConfig({
-          isOpen: true,
-          title: 'Erro no Pagamento',
-          message: `${data.error}\n\nDetalhes: ${typeof data.details === 'object' ? JSON.stringify(data.details, null, 2) : data.details}`,
-          confirmLabel: 'Entendido',
-          isDanger: true,
-          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-        });
-      }
-    } catch (error: any) {
-      console.error('Error starting payment:', error);
-      setModalConfig({
-        isOpen: true,
-        title: 'Erro de Conexão',
-        message: error.message || 'Não foi possível conectar ao servidor de pagamentos. Verifique sua conexão.',
-        confirmLabel: 'Entendido',
-        isDanger: true,
-        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-      });
-    }
-  };
-
-  // Payment success handling via URL params
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
-    const planType = urlParams.get('plan');
-    
-    if (paymentStatus === 'success' && user && settings.plan === 'free') {
-      const isLifetime = planType === 'lifetime';
-      const expiration = isLifetime ? (Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)) : (Date.now() + (30 * 24 * 60 * 60 * 1000));
-      
-      const upgradedSettings: AppSettings = { 
-        ...settings, 
-        plan: 'premium' as const,
-        subscriptionExpiresAt: expiration,
-        autoRenew: true,
-        subscriptionStatus: 'pending'
-      };
-      
-      // Update settings in Cloud (onSnapshot will handle the UI state)
-      apiService.saveSettings(user.uid, upgradedSettings).catch(console.error);
-      
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      setModalConfig({
-        isOpen: true,
-        title: '🌟 Assinatura Ativada!',
-        message: `Parabéns! Sua assinatura ${isLifetime ? 'Vitalícia' : 'Mensal'} está sendo processada. Em instantes ela será confirmada!`,
-        confirmLabel: 'Aproveitar!',
-        isDanger: false,
-        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-      });
-    }
-  }, [user, settings.plan]);
-
-  // Handle subscription confirmation delay (Simulation)
-  const processingUser = useRef<string | null>(null);
-  useEffect(() => {
-    if (user && settings.plan === 'premium' && settings.subscriptionStatus === 'pending') {
-      const uniqueProcessId = `${user.uid}-${settings.subscriptionExpiresAt}`;
-      if (processingUser.current === uniqueProcessId) return;
-      
-      processingUser.current = uniqueProcessId;
-      const timer = setTimeout(() => {
-        apiService.saveSettings(user.uid, { ...settings, subscriptionStatus: 'confirmed' })
-          .then(() => {
-             processingUser.current = null;
-          })
-          .catch(err => {
-            console.error(err);
-            processingUser.current = null;
-          });
-      }, 5000); // 5 seconds simulation
-      return () => clearTimeout(timer);
-    }
-  }, [user, settings.plan, settings.subscriptionStatus]);
-
   const confirmNavigation = (nextTab: Tab) => {
-    if (nextTab === 'trends' && !isPremium) {
-      showUpgradeModal('Tendências e Gráficos');
-      return;
-    }
-
     if (activeTab === 'settings' && pendingTheme && pendingTheme !== settings.theme) {
       setModalConfig({
         isOpen: true,
@@ -358,35 +146,8 @@ export default function App() {
     setActiveTab(nextTab);
   };
 
-  const handleCancelSubscription = () => {
-    if (!user) return;
-    setModalConfig({
-      isOpen: true,
-      title: 'Cancelar Assinatura',
-      message: 'Tem certeza que deseja cancelar sua assinatura mensal? Seus benefícios Premium continuarão ativos até o fim do período já pago.',
-      confirmLabel: 'Confirmar Cancelamento',
-      isDanger: true,
-      onConfirm: async () => {
-        try {
-          const updatedSettings = { 
-            ...settings, 
-            autoRenew: false
-          };
-          await apiService.saveSettings(user.uid, updatedSettings);
-          setModalConfig(prev => ({ ...prev, isOpen: false }));
-        } catch (error) {
-          console.error('Failed to cancel subscription:', error);
-        }
-      }
-    });
-  };
-
   const addEntry = async (entry: OvertimeEntry) => {
     if (!user) return;
-    if (!isPremium && entries.length >= 10) {
-      showUpgradeModal('Limite de Registros');
-      return;
-    }
     try {
       await apiService.addEntry(user.uid, entry);
       setActiveTab('history');
@@ -485,10 +246,6 @@ export default function App() {
   }, [settings.theme]);
 
   const exportReport = () => {
-    if (!isPremium) {
-      showUpgradeModal('Exportação de Relatórios');
-      return;
-    }
     generatePDF(entries, settings);
   };
 
@@ -620,11 +377,9 @@ export default function App() {
                 settings={settings} 
                 user={user}
                 onUpdate={updateSettings} 
-                onUpgrade={() => setIsSubscriptionModalOpen(true)}
                 onThemePreview={(theme) => setPendingTheme(theme)}
                 onClearHistory={clearEntries}
                 onLogout={logout}
-                onCancelSubscription={handleCancelSubscription}
               />
             </motion.div>
           )}
@@ -697,16 +452,6 @@ export default function App() {
           Desenvolvido por Anderson Silva
         </p>
       </footer>
-
-      {/* Subscription Modal */}
-      <SubscriptionModal 
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-        onUpgrade={handleUpgrade}
-        currentPlan={settings.plan}
-        isLifetime={settings.plan === 'premium' && !!settings.subscriptionExpiresAt && settings.subscriptionExpiresAt > Date.now() + (365 * 24 * 60 * 60 * 1000 * 5)}
-        subscriptionStatus={settings.subscriptionStatus}
-      />
 
       {/* Custom Confirmation Modal */}
       <ConfirmationModal 

@@ -1,36 +1,31 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { AppSettings } from '../types';
 import { 
   Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2, 
-  Percent, Palette, Moon, Sun, Monitor, AlertCircle, LogOut, User as UserIcon,
-  Crown, Star, ShieldCheck, Zap
+  Palette, Moon, Sun, Monitor, LogOut, User as UserIcon,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import ConfirmationModal from './ConfirmationModal';
 import { User } from 'firebase/auth';
 
 interface SettingsScreenProps {
   settings: AppSettings;
   user: User;
   onUpdate: (settings: AppSettings) => Promise<void>;
-  onUpgrade: () => void;
   onThemePreview: (theme: string) => void;
   onClearHistory: () => void;
   onLogout: () => Promise<void>;
-  onCancelSubscription: () => void;
 }
 
 export default function SettingsScreen({ 
   settings, 
   user, 
   onUpdate, 
-  onUpgrade, 
   onThemePreview, 
   onClearHistory, 
   onLogout,
-  onCancelSubscription
 }: SettingsScreenProps) {
   const { resendVerification } = useAuth();
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
@@ -41,19 +36,18 @@ export default function SettingsScreen({
   const [defaultMultiplier, setDefaultMultiplier] = useState<1.0 | 2.0>(settings.defaultMultiplier || 1.0);
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(settings.theme || 'dark');
-  const [plan, setPlan] = useState(settings.plan || 'free');
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'geral' | 'temas'>('geral');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const themes = [
-    { id: 'light', label: 'Claro', icon: Sun, color: '#F8F9FA', premium: false },
-    { id: 'dark', label: 'Escuro', icon: Moon, color: '#0A0A0A', premium: false },
-    { id: 'high-contrast', label: 'Contraste', icon: Monitor, color: '#000000', premium: true },
-    { id: 'sky', label: 'Céu Noturno', icon: Palette, color: '#0F172A', premium: true },
-    { id: 'ruby', label: 'Rubi', icon: Palette, color: '#1A0B0B', premium: true },
-    { id: 'emerald', label: 'Esmeralda', icon: Palette, color: '#061A13', premium: true },
-    { id: 'amber', label: 'Âmbar', icon: Palette, color: '#1C1206', premium: true },
+    { id: 'light', label: 'Claro', icon: Sun, color: '#F8F9FA' },
+    { id: 'dark', label: 'Escuro', icon: Moon, color: '#0A0A0A' },
+    { id: 'high-contrast', label: 'Contraste', icon: Monitor, color: '#000000' },
+    { id: 'sky', label: 'Céu Noturno', icon: Palette, color: '#0F172A' },
+    { id: 'ruby', label: 'Rubi', icon: Palette, color: '#1A0B0B' },
+    { id: 'emerald', label: 'Esmeralda', icon: Palette, color: '#061A13' },
+    { id: 'amber', label: 'Âmbar', icon: Palette, color: '#1C1206' },
   ];
 
   // Check if there are unsaved changes
@@ -83,7 +77,6 @@ export default function SettingsScreen({
     setMonthlyLimit(settings.monthlyLimit?.toString() || '40');
     setDefaultMultiplier(settings.defaultMultiplier || 1.0);
     setTheme(settings.theme || 'dark');
-    setPlan(settings.plan || 'free');
   }, [settings]);
 
   const handleSave = async (e?: React.FormEvent) => {
@@ -97,10 +90,8 @@ export default function SettingsScreen({
         monthlyLimit: Number(monthlyLimit.toString().replace(',', '.')) || 0,
         defaultMultiplier,
         theme: theme as any,
-        plan: plan as any,
       };
       
-      console.log('Saving settings:', updatedSettings);
       await onUpdate(updatedSettings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -111,11 +102,7 @@ export default function SettingsScreen({
     }
   };
 
-  const handleThemeSelect = (themeId: string, isPremium: boolean) => {
-    if (isPremium && plan === 'free') {
-      onUpgrade();
-      return;
-    }
+  const handleThemeSelect = (themeId: string) => {
     setTheme(themeId as any);
   };
 
@@ -233,90 +220,6 @@ export default function SettingsScreen({
             transition={{ duration: 0.2 }}
             className="space-y-6"
           >
-            {/* Plan Section */}
-            <motion.div 
-              className={cn(
-                "p-6 rounded-3xl border transition-all relative overflow-hidden group",
-                plan === 'premium' 
-                  ? "bg-gradient-to-br from-app-accent to-indigo-600 text-white border-transparent shadow-xl shadow-app-accent/20" 
-                  : "bg-app-card border-app-border"
-              )}
-            >
-              {plan === 'premium' && (
-                <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Crown className="w-32 h-32 rotate-12" />
-                </div>
-              )}
-              
-              <div className="flex justify-between items-start mb-6 relative z-10">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className={cn("font-black uppercase tracking-widest text-[10px]", plan === 'premium' ? "text-white/70" : "text-app-muted")}>
-                      Plano Atual
-                    </h3>
-                  </div>
-                  <h2 className={cn("text-2xl font-black tracking-tighter uppercase", plan === 'premium' ? "text-white" : "text-app-text")}>
-                    {plan === 'premium' ? 'Assinante Premium' : 'Plano Gratuito'}
-                  </h2>
-                </div>
-                <div className={cn(
-                  "p-3 rounded-2xl",
-                  plan === 'premium' ? "bg-white/10" : "bg-app-bg border border-app-border"
-                )}>
-                  {plan === 'premium' ? <Crown className="w-6 h-6 text-yellow-300" /> : <Star className="w-6 h-6 text-app-muted" />}
-                </div>
-              </div>
-
-              {!plan || plan === 'free' ? (
-                <button
-                  type="button"
-                  onClick={onUpgrade}
-                  className="w-full bg-app-accent text-app-accent-text py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
-                >
-                  <Crown className="w-4 h-4" />
-                  Seja Premium
-                </button>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-white/60" />
-                    <span className="text-xs font-bold text-white/80 text-left">Recursos ilimitados ativados</span>
-                  </div>
-                  <div className="pt-4 border-t border-white/10 space-y-4">
-                    {settings.subscriptionExpiresAt && (
-                      <div className="flex justify-between items-center">
-                        <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
-                          Válido até: {settings.subscriptionExpiresAt > Date.now() + (365 * 24 * 60 * 60 * 1000 * 5) 
-                            ? 'Vitalício' 
-                            : new Date(settings.subscriptionExpiresAt).toLocaleDateString('pt-BR')}
-                        </p>
-                        {settings.autoRenew !== false && settings.subscriptionExpiresAt < Date.now() + (365 * 24 * 60 * 60 * 1000 * 5) && (
-                          <button
-                            type="button"
-                            onClick={onCancelSubscription}
-                            className="text-[9px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
-                          >
-                            Cancelar
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    
-                    {!(settings.subscriptionExpiresAt && settings.subscriptionExpiresAt > Date.now() + (365 * 24 * 60 * 60 * 1000 * 5)) && (
-                      <button
-                        type="button"
-                        onClick={onUpgrade}
-                        className="w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all"
-                      >
-                        <Zap className="w-3 h-3" />
-                        Fazer Upgrade de Plano
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-
             <form onSubmit={handleSave} className="space-y-6">
               <div className="bg-app-card p-6 rounded-3xl space-y-6 shadow-sm border border-app-border">
                 <div className="flex justify-between items-center border-b border-app-border pb-2">
@@ -415,7 +318,7 @@ export default function SettingsScreen({
                 {themes.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => handleThemeSelect(t.id, t.premium)}
+                    onClick={() => handleThemeSelect(t.id)}
                     className={cn(
                       "group relative flex items-center justify-between p-4 rounded-2xl border transition-all text-left",
                       theme === t.id 
@@ -433,22 +336,15 @@ export default function SettingsScreen({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-app-text">{t.label}</span>
-                          {t.premium && plan === 'free' && (
-                            <span className="bg-amber-500/10 text-amber-500 text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider">
-                              Premium
-                            </span>
-                          )}
                         </div>
                         <p className="text-[10px] font-bold text-app-muted opacity-60 uppercase tracking-widest">
-                          {t.premium && plan === 'free' ? 'Desbloqueie com Premium' : 'Toque para aplicar'}
+                          Toque para aplicar
                         </p>
                       </div>
                     </div>
-                    {theme === t.id ? (
+                    {theme === t.id && (
                       <ShieldCheck className="w-5 h-5 text-app-accent" />
-                    ) : t.premium && plan === 'free' ? (
-                      <Crown className="w-5 h-5 text-app-muted opacity-40 group-hover:text-amber-500 group-hover:opacity-100 transition-all" />
-                    ) : null}
+                    )}
                   </button>
                 ))}
               </div>
@@ -466,30 +362,6 @@ export default function SettingsScreen({
                 {saved ? "Aplicado!" : "Aplicar Mudanças"}
               </button>
             </div>
-
-            {plan === 'free' && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-6 rounded-3xl"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/20">
-                    <Crown className="w-4 h-4" />
-                  </div>
-                  <div className="text-left">
-                    <h4 className="text-sm font-black text-amber-600 uppercase tracking-tight">Liberar Temas</h4>
-                    <p className="text-[10px] font-black text-amber-600/60 uppercase tracking-widest">Acesso total a cores exclusivas</p>
-                  </div>
-                </div>
-                <button
-                  onClick={onUpgrade}
-                  className="w-full py-4 rounded-xl bg-amber-500 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all"
-                >
-                  Fazer Upgrade Agora
-                </button>
-              </motion.div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

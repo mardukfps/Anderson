@@ -159,42 +159,6 @@ export const apiService = {
     }
   },
 
-  // Mercado Pago
-  async getAuthHeaders() {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não autenticado");
-    // Forçamos a atualização do token para evitar sessões expiradas em operações críticas
-    const token = await user.getIdToken(true);
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-  },
-
-  async createPlan(reason: string, amount: number) {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch('/api/subscription/create-plan', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ reason, amount })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Erro ao criar plano");
-    return data;
-  },
-
-  async subscribe(planId: string, cardTokenId: string, payerEmail: string, reason?: string) {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch('/api/subscription/subscribe', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ planId, cardTokenId, payerEmail, reason })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Erro ao criar assinatura");
-    return data;
-  },
-
   // Security & Cache
   async ensureUserProfile(userId: string, email: string, name: string) {
     const docRef = doc(db, 'users', userId);
