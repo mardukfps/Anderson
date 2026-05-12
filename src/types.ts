@@ -14,6 +14,7 @@ export interface OvertimeEntry {
   calculatedValue: number;
   notes?: string;
   isNightShift?: boolean;
+  nightHours?: number;
   createdAt: number;
 }
 
@@ -25,6 +26,7 @@ export interface AppSettings {
   defaultMultiplier: 1.0 | 2.0;
   theme: Theme;
   baseSalary: number;
+  userId?: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

@@ -29,7 +29,28 @@ type Tab = 'dashboard' | 'trends' | 'history' | 'add' | 'settings';
 
 export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const hash = window.location.hash.replace('#', '') as Tab;
+    return (['dashboard', 'trends', 'history', 'add', 'settings'].includes(hash) ? hash : 'dashboard');
+  });
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as Tab;
+      if (['dashboard', 'trends', 'history', 'add', 'settings'].includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab) {
+      window.location.hash = activeTab;
+    }
+  }, [activeTab]);
   const [editingEntry, setEditingEntry] = useState<OvertimeEntry | null>(null);
   const [entries, setEntries] = useState<OvertimeEntry[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -243,6 +264,20 @@ export default function App() {
     
     // Add theme class
     root.classList.add(settings.theme);
+
+    // Update theme-color meta tag
+    let themeColor = '#38BDF8'; // Default
+    if (settings.theme === 'dark') themeColor = '#0A0A0A';
+    if (settings.theme === 'light') themeColor = '#F8F9FA';
+    if (settings.theme === 'sky') themeColor = '#0F172A';
+    if (settings.theme === 'ruby') themeColor = '#1A0B0B';
+    if (settings.theme === 'emerald') themeColor = '#061A13';
+    if (settings.theme === 'amber') themeColor = '#1C1206';
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeColor);
+    }
   }, [settings.theme]);
 
   const exportReport = () => {
@@ -262,23 +297,24 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg font-sans text-app-text pb-28 flex flex-col items-center selection:bg-gray-200 dark:selection:bg-gray-800 transition-colors duration-300">
+    <div className="min-h-screen bg-app-bg font-sans text-app-text pb-28 flex flex-col items-center selection:bg-app-accent selection:text-app-accent-text transition-colors duration-500">
       {isOffline && (
         <div className="w-full bg-red-500/10 border-b border-red-500/20 py-2 px-4 text-center sticky top-0 z-[60] backdrop-blur-md">
-          <p className="text-[10px] font-black uppercase tracking-widest text-red-500">
+          <p className="text-[10px] font-black uppercase tracking-widest text-red-500 animate-pulse">
             Você está offline. Verifique sua conexão para salvar seus dados.
           </p>
         </div>
       )}
       {/* Dynamic Content area */}
-      <main className="w-full max-w-lg p-5 md:p-8 flex-1 flex flex-col">
+      <main className="w-full max-w-lg p-6 md:p-10 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div
               key="dashboard"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", damping: 20, stiffness: 100 }}
             >
               <Dashboard 
                 entries={entries} 
@@ -291,9 +327,10 @@ export default function App() {
           {activeTab === 'trends' && (
             <motion.div
               key="trends"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, x: -20 }}
+              transition={{ type: "spring", damping: 20 }}
             >
               <TrendsScreen entries={entries} settings={settings} />
             </motion.div>
@@ -302,31 +339,34 @@ export default function App() {
           {activeTab === 'history' && (
             <motion.div
               key="history"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -20 }}
             >
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold tracking-tight text-app-text">Histórico</h1>
+              <div className="flex justify-between items-center mb-10">
+                <div className="space-y-1">
+                  <h1 className="text-3xl font-bold tracking-tight text-app-text">Histórico</h1>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-app-muted opacity-60">Seus registros salvos</p>
+                </div>
                 <div className="flex gap-2">
                   <motion.button 
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={exportReport}
-                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest bg-app-card text-app-text px-4 py-3 rounded-xl shadow-sm hover:border-app-accent/30 transition-all border border-app-border"
+                    className="p-3 rounded-2xl bg-app-card border border-app-border hover:border-app-accent transition-all shadow-sm"
+                    title="Exportar PDF"
                   >
-                    <Download className="w-4 h-4 text-app-accent" />
-                    PDF
+                    <Download className="w-5 h-5 text-app-accent" />
                   </motion.button>
                   {entries.length > 0 && (
                     <motion.button 
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={clearEntries}
-                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl shadow-sm hover:bg-red-500 hover:text-white transition-all border border-app-border"
+                      className="p-3 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                      title="Limpar Histórico"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Limpar
+                      <Trash2 className="w-5 h-5" />
                     </motion.button>
                   )}
                 </div>
@@ -342,13 +382,18 @@ export default function App() {
           {activeTab === 'add' && (
             <motion.div
               key="add"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-6 text-app-text">
-                {editingEntry ? 'Editar Registro' : 'Novo Registro'}
-              </h1>
+              <div className="space-y-1 mb-8">
+                <h1 className="text-3xl font-black tracking-tighter text-app-text">
+                  {editingEntry ? 'Editar' : 'Registro'}
+                </h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-app-muted opacity-40">
+                  {editingEntry ? 'Atualize os dados' : 'Adicione suas horas extras'}
+                </p>
+              </div>
               <div key={editingEntry ? `edit-${editingEntry.id}` : 'new'}>
                 <EntryForm 
                   onSubmit={editingEntry ? updateEntry : addEntry} 
@@ -366,12 +411,13 @@ export default function App() {
           {activeTab === 'settings' && (
             <motion.div
               key="settings"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
             >
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold tracking-tight text-app-text">Configurações</h1>
+              <div className="space-y-1 mb-8 text-left">
+                <h1 className="text-3xl font-bold tracking-tight text-app-text">Ajustes</h1>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-app-muted opacity-60">Personalize sua experiência</p>
               </div>
               <SettingsScreen 
                 settings={settings} 
@@ -387,7 +433,7 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-20 bg-app-card/90 backdrop-blur-xl border-t border-app-border grid grid-cols-5 items-center px-2 z-50 transition-colors shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)]">
+      <nav className="fixed bottom-0 left-0 right-0 h-24 bg-app-card border-t border-app-border grid grid-cols-5 items-center px-4 z-50 transition-colors shadow-lg">
         <NavButton 
           active={activeTab === 'dashboard'} 
           onClick={() => {
@@ -418,13 +464,14 @@ export default function App() {
             initial={{ y: -20 }}
             animate={{ y: -24 }}
             className={cn(
-              "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all border-4 border-app-bg z-10",
+              "w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all border-4 border-app-bg z-10",
               "bg-app-accent text-app-accent-text"
             )}
           >
             <Plus className="w-8 h-8 stroke-[3]" />
           </motion.button>
         </div>
+
 
         <NavButton 
           active={activeTab === 'history'} 

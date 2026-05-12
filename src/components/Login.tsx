@@ -63,13 +63,8 @@ export default function Login() {
           <div className="flex flex-col gap-2 text-left p-2">
             <span className="font-bold">E-mail/Senha não ativado</span>
             <p className="text-[9px] opacity-90">
-              O provedor de E-mail/Senha precisa ser habilitado no Firebase Console.
+              O provedor de E-mail/Senha precisa ser habilitado no Console.
             </p>
-            <ol className="text-[9px] list-decimal ml-4 opacity-90">
-              <li>Acesse <a href="https://console.firebase.google.com/project/gen-lang-client-0519991270/authentication/providers" target="_blank" rel="noreferrer" className="underline font-bold">Autenticação</a></li>
-              <li>Habilite "E-mail/Senha"</li>
-              <li>Salve e tente novamente</li>
-            </ol>
           </div>
         );
       } else if (err.code === 'auth/email-already-in-use') {
@@ -98,39 +93,54 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-app-bg flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-app-accent/10 via-transparent to-transparent">
+    <div className="min-h-screen bg-app-bg flex items-center justify-center p-6 transition-colors duration-300">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-app-card p-10 rounded-3xl shadow-2xl border border-app-border backdrop-blur-sm text-center"
+        className="w-full max-w-md bg-app-card p-10 rounded-3xl shadow-xl border border-app-border"
       >
         <div className="mb-10 flex flex-col items-center">
-          <Logo size={100} className="mb-6" />
-          <div className="flex flex-col items-center">
-            <span className="text-app-muted text-[10px] font-black uppercase tracking-[0.3em] opacity-60">
-              {authMode === 'login' ? 'Bem-vindo de volta ao' : 'Junte-se ao'}
-            </span>
-            <h1 className="text-2xl font-black tracking-[0.1em] uppercase text-app-text">
-              JORNADA<span className="text-app-accent">+</span>
-            </h1>
-          </div>
+          <Logo size={80} className="mb-6" />
+          <h1 className="text-2xl font-bold tracking-tight text-app-text">
+            JORNADA<span className="text-app-accent">+</span>
+          </h1>
+          <p className="text-app-muted text-xs font-medium mt-1">Sua gestão de horas extras</p>
         </div>
 
         <div className="space-y-6">
+          <div className="flex bg-app-bg p-1 rounded-2xl border border-app-border">
+            <button
+              onClick={() => setAuthMode('login')}
+              className={cn(
+                "flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all",
+                authMode === 'login' ? "bg-app-card shadow-sm text-app-text" : "text-app-muted"
+              )}
+            >
+              Fazer Login
+            </button>
+            <button
+              onClick={() => setAuthMode('signup')}
+              className={cn(
+                "flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all",
+                authMode === 'signup' ? "bg-app-card shadow-sm text-app-text" : "text-app-muted"
+              )}
+            >
+              Criar Conta
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={authMode}
-                initial={{ opacity: 0, x: authMode === 'login' ? -10 : 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: authMode === 'login' ? 10 : -10 }}
-                className="space-y-4 text-left"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-4"
               >
                 {authMode === 'signup' && (
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-app-muted group-focus-within:text-app-accent transition-colors">
-                      <User className="w-5 h-5" />
-                    </div>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-app-muted" />
                     <input
                       type="text"
                       placeholder="Nome completo"
@@ -142,13 +152,11 @@ export default function Login() {
                   </div>
                 )}
 
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-app-muted group-focus-within:text-app-accent transition-colors">
-                    <Mail className="w-5 h-5" />
-                  </div>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-app-muted" />
                   <input
                     type="email"
-                    placeholder="E-mail"
+                    placeholder="Seu melhor e-mail"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -156,51 +164,36 @@ export default function Login() {
                   />
                 </div>
 
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-app-muted group-focus-within:text-app-accent transition-colors">
-                    <Lock className="w-5 h-5" />
-                  </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-app-muted" />
                   <input
                     type="password"
-                    placeholder={authMode === 'signup' ? "Mínimo 8 caracteres" : "Senha"}
+                    placeholder="Sua senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="w-full bg-app-bg border border-app-border focus:border-app-accent rounded-2xl py-4 pl-12 pr-4 text-sm font-medium outline-none transition-all"
                   />
                 </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-app-bg border border-app-border text-app-text flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all hover:bg-app-border/20 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <span>{authMode === 'login' ? 'Entrar Agora' : 'Finalizar Cadastro'}</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </motion.button>
-
-                <div className="text-center pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode(authMode === 'login' ? 'signup' : 'login');
-                      setError(null);
-                    }}
-                    className="text-[10px] font-black uppercase tracking-widest text-app-accent hover:opacity-80 transition-opacity"
-                  >
-                    {authMode === 'login' ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça Login'}
-                  </button>
-                </div>
               </motion.div>
             </AnimatePresence>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-app-accent border border-app-accent text-app-accent-text flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-app-accent/20 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <span>{authMode === 'login' ? 'Acessar Conta' : 'Começar Agora'}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </motion.button>
           </form>
 
           <AnimatePresence>
@@ -209,46 +202,18 @@ export default function Login() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex gap-3 items-start"
+                className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex gap-3 items-center"
               >
-                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                <div className="text-[10px] text-red-500 text-left leading-tight">
-                  {typeof error === 'string' ? <span className="font-bold uppercase tracking-widest">{error}</span> : error}
-                </div>
-              </motion.div>
-            )}
-
-            {success && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex gap-3 items-start"
-              >
-                <div className="w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black">!</span>
-                </div>
-                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 text-left leading-tight">
-                  <span className="font-bold uppercase tracking-widest">{success}</span>
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                <div className="text-xs text-red-500 font-medium">
+                  {error}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-
-        <div className="mt-12 pt-8 border-t border-app-border space-y-4">
-          <div className="flex items-center justify-center gap-2 opacity-40">
-            <div className="h-px w-8 bg-app-border" />
-            <p className="text-[8px] font-black text-app-muted uppercase tracking-[0.2em]">
-              Jornada+ &copy; 2026
-            </p>
-            <div className="h-px w-8 bg-app-border" />
-          </div>
-          <p className="text-[10px] font-bold text-app-accent uppercase tracking-widest">
-            Desenvolvido por Anderson Silva
-          </p>
-        </div>
       </motion.div>
     </div>
   );
 }
+

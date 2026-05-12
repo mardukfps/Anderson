@@ -60,15 +60,24 @@ export const apiService = {
       const q = query(collection(db, path), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => doc.data() as OvertimeEntry);
-      localStorage.setItem(`${STORAGE_KEY_ENTRIES}_${userId}`, JSON.stringify(data));
+      // Safe localStorage usage
+      try {
+        localStorage.setItem(`${STORAGE_KEY_ENTRIES}_${userId}`, JSON.stringify(data));
+      } catch (e) {
+        console.warn('LocalStorage is full or restricted');
+      }
       return data;
     } catch (error) {
       if (error instanceof Error && error.message.includes('permission')) {
         handleFirestoreError(error, OperationType.LIST, path);
       }
       console.error('Error fetching entries:', error);
-      const local = localStorage.getItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
-      return local ? JSON.parse(local) : [];
+      try {
+        const local = localStorage.getItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
+        return local ? JSON.parse(local) : [];
+      } catch (e) {
+        return [];
+      }
     }
   },
 
@@ -115,7 +124,9 @@ export const apiService = {
         batch.delete(d.ref);
       });
       await batch.commit();
-      localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
+      try {
+        localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
+      } catch (e) {}
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}/entries`);
       throw error;
@@ -130,7 +141,9 @@ export const apiService = {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data() as AppSettings;
-        localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(data));
+        try {
+          localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(data));
+        } catch (e) {}
         return data;
       }
       return DEFAULT_SETTINGS;
@@ -139,20 +152,33 @@ export const apiService = {
         handleFirestoreError(error, OperationType.GET, path);
       }
       console.error('Error fetching settings:', error);
-      const local = localStorage.getItem(`${STORAGE_KEY_SETTINGS}_${userId}`);
-      return local ? JSON.parse(local) : DEFAULT_SETTINGS;
+      try {
+        const local = localStorage.getItem(`${STORAGE_KEY_SETTINGS}_${userId}`);
+        return local ? JSON.parse(local) : DEFAULT_SETTINGS;
+      } catch (e) {
+        return DEFAULT_SETTINGS;
+      }
     }
   },
 
   async saveSettings(userId: string, settings: AppSettings): Promise<AppSettings> {
     const path = `users/${userId}/settings/config`;
     try {
-      await setDoc(doc(db, 'users', userId, 'settings', 'config'), {
-        ...settings,
-        userId
-      });
-      localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(settings));
-      return settings;
+      // Sanitize: Only include fields allowed by security rules
+      const sanitizedSettings = {
+        baseHourlyRate: Number(settings.baseHourlyRate) || 0,
+        baseSalary: Number(settings.baseSalary) || 0,
+        monthlyLimit: Number(settings.monthlyLimit) || 0,
+        defaultMultiplier: Number(settings.defaultMultiplier) || 2.0,
+        theme: settings.theme || 'dark',
+        userId: userId
+      };
+      
+      await setDoc(doc(db, 'users', userId, 'settings', 'config'), sanitizedSettings);
+      try {
+        localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(sanitizedSettings));
+      } catch (e) {}
+      return sanitizedSettings as AppSettings;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
       throw error;
@@ -178,8 +204,9 @@ export const apiService = {
   },
 
   clearCache(userId: string) {
-    localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
-    localStorage.removeItem(`${STORAGE_KEY_SETTINGS}_${userId}`);
-    // Clear any other user-specific local storage here
+    try {
+      localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);
+      localStorage.removeItem(`${STORAGE_KEY_SETTINGS}_${userId}`);
+    } catch (e) {}
   }
 };

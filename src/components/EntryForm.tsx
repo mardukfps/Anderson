@@ -233,7 +233,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
             <div className="text-2xl font-mono text-app-text font-bold leading-none">
               {formatExactHours(stats.realHours)}
             </div>
-            <div className="mt-2 flex items-center gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               <span className="px-1.5 py-0.5 rounded-md bg-app-accent/10 text-app-accent text-[9px] font-black uppercase">
                 {multiplier === 1.0 ? 'Hora Extra 50%' : 'Hora Extra 100%'}
               </span>

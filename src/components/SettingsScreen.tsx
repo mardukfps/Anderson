@@ -5,7 +5,7 @@ import { AppSettings } from '../types';
 import { 
   Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2, 
   Palette, Moon, Sun, Monitor, LogOut, User as UserIcon,
-  ShieldCheck
+  ShieldCheck, EyeOff, Eye, Camera, Edit3, Percent
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { User } from 'firebase/auth';
@@ -134,14 +134,10 @@ export default function SettingsScreen({
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-app-card p-6 rounded-3xl flex items-center gap-4 shadow-sm border border-app-border"
+        className="bg-app-card p-6 rounded-3xl flex items-center gap-4 shadow-sm border border-app-border overflow-hidden relative"
       >
         <div className="w-16 h-16 rounded-2xl overflow-hidden bg-app-bg flex items-center justify-center border border-app-border shadow-inner">
-          {user.photoURL ? (
-            <img src={user.photoURL} alt={user.displayName || 'Usuário'} className="w-full h-full object-cover" />
-          ) : (
-            <UserIcon className="w-8 h-8 text-app-muted" />
-          )}
+          <UserIcon className="w-8 h-8 text-app-muted" />
         </div>
         <div className="flex-1 overflow-hidden">
           <h2 className="font-black text-lg tracking-tight truncate text-app-text">
@@ -158,15 +154,6 @@ export default function SettingsScreen({
               )}>
                 {user.emailVerified ? 'E-mail Verificado' : 'E-mail Pendente'}
               </span>
-              {!user.emailVerified && (
-                <button 
-                  onClick={handleResend}
-                  disabled={resending || resent}
-                  className="text-[8px] font-black uppercase tracking-widest text-app-accent hover:underline disabled:opacity-50"
-                >
-                  {resent ? 'Link Enviado!' : resending ? 'Enviando...' : 'Reenviar Link'}
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -183,29 +170,29 @@ export default function SettingsScreen({
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex p-1 bg-app-card rounded-2xl border border-app-border">
+      <div className="flex p-1 bg-app-card rounded-2xl border border-app-border overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('geral')}
           className={cn(
-            "flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+            "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
             activeTab === 'geral' 
               ? "bg-app-accent text-app-accent-text shadow-sm" 
               : "text-app-muted hover:bg-app-bg"
           )}
         >
-          <SettingsIcon className="w-4 h-4" />
+          <SettingsIcon className="w-3.5 h-3.5" />
           Geral
         </button>
         <button
           onClick={() => setActiveTab('temas')}
           className={cn(
-            "flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+            "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
             activeTab === 'temas' 
               ? "bg-app-accent text-app-accent-text shadow-sm" 
               : "text-app-muted hover:bg-app-bg"
           )}
         >
-          <Palette className="w-4 h-4" />
+          <Palette className="w-3.5 h-3.5" />
           Temas
         </button>
       </div>
@@ -260,6 +247,38 @@ export default function SettingsScreen({
                     onChange={(e) => setMonthlyLimit(e.target.value)}
                     className="w-full bg-app-bg border border-app-border p-4 rounded-2xl focus:ring-2 focus:ring-app-accent/10 transition-all outline-none font-bold text-xl text-app-text"
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
+                    <Percent className="w-3 h-3" /> Multiplicador Padrão
+                  </label>
+                  <div className="flex bg-app-bg p-1 rounded-2xl border border-app-border">
+                    <button
+                      type="button"
+                      onClick={() => setDefaultMultiplier(1.0)}
+                      className={cn(
+                        "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                        defaultMultiplier === 1.0 
+                          ? "bg-app-accent text-app-accent-text shadow-sm" 
+                          : "text-app-muted hover:text-app-text"
+                      )}
+                    >
+                      50% (1.0x)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDefaultMultiplier(2.0)}
+                      className={cn(
+                        "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                        defaultMultiplier === 2.0 
+                          ? "bg-app-accent text-app-accent-text shadow-sm" 
+                          : "text-app-muted hover:text-app-text"
+                      )}
+                    >
+                      100% (2.0x)
+                    </button>
+                  </div>
                 </div>
               </div>
 

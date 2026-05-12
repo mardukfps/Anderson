@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { OvertimeEntry, AppSettings, EntryType } from '../types';
 import { formatCurrency, cn, formatExactHours } from '../lib/utils';
-import { Wallet, Clock, CircleCheck, AlertCircle, Mail, TrendingUp } from 'lucide-react';
+import { Wallet, Clock, CircleCheck, AlertCircle, Mail, TrendingUp, Plus } from 'lucide-react';
 import Logo from './Logo';
 
 interface DashboardProps {
@@ -236,3 +236,4 @@ function StatCard({ icon, label, value, bgColor }: { icon: React.ReactNode, labe
     </motion.div>
   );
 }
+
