@@ -210,6 +210,21 @@ export default function Login() {
                 </div>
               </motion.div>
             )}
+            {success && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex gap-3 items-center"
+              >
+                <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                  <Logo size={10} />
+                </div>
+                <div className="text-xs text-emerald-500 font-medium">
+                  {success}
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </motion.div>

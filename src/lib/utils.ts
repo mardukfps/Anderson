@@ -1,3 +1,4 @@
+import { parseISO } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -6,6 +7,14 @@ import { twMerge } from 'tailwind-merge';
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Parses a YYYY-MM-DD string into a Date object safely by setting noon time.
+ * This prevents timezone drift errors where a date might show as the previous day.
+ */
+export function parseLocalDate(dateStr: string): Date {
+  return parseISO(`${dateStr}T12:00:00`);
 }
 
 /**
@@ -22,8 +31,9 @@ export function timeStringToDecimal(timeStr: string): number {
  * Example: 1.5 -> "01:30"
  */
 export function decimalToTimeString(decimal: number): string {
-  const hours = Math.floor(decimal);
-  const minutes = Math.round((decimal - hours) * 60);
+  const totalMinutes = Math.round(decimal * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
@@ -31,8 +41,9 @@ export function decimalToTimeString(decimal: number): string {
  * Formata horas decimais em uma string legível (ex: 1.25 -> "1h 15m")
  */
 export function formatExactHours(decimal: number): string {
-  const hours = Math.floor(decimal);
-  const minutes = Math.round((decimal - hours) * 60);
+  const totalMinutes = Math.round(decimal * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   
   if (hours === 0 && minutes === 0) return "0h";
   if (hours === 0) return `${minutes}m`;

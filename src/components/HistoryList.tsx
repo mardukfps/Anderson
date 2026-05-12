@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { OvertimeEntry, EntryType } from '../types';
-import { formatCurrency, cn, formatExactHours } from '../lib/utils';
+import { formatCurrency, cn, formatExactHours, parseLocalDate } from '../lib/utils';
 import { 
-  Trash2, Edit3, Clock, CreditCard, Filter, X, Search, FileText
+  Trash2, Edit3, Clock, CreditCard, Filter, X
 } from 'lucide-react';
 import { 
-  format, parseISO
+  format
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import CalendarInput from './CalendarInput';
@@ -144,7 +144,7 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-app-text">
-                      {format(parseISO(entry.date), "dd 'de' MMMM", { locale: ptBR })}
+                      {format(parseLocalDate(entry.date), "dd 'de' MMMM", { locale: ptBR })}
                     </span>
                     <span className={cn(
                       "text-[8px] font-bold px-2 py-0.5 rounded-md uppercase",

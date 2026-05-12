@@ -18,11 +18,10 @@ import {
   eachDayOfInterval, 
   isSameMonth, 
   isSameDay, 
-  parseISO,
   isToday
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn, getBrazilDate } from '../lib/utils';
+import { cn, getBrazilDate, parseLocalDate } from '../lib/utils';
 
 interface CalendarInputProps {
   label: string;
@@ -33,13 +32,13 @@ interface CalendarInputProps {
 
 export default function CalendarInput({ label, value, onChange, error }: CalendarInputProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(value ? parseISO(value) : parseISO(getBrazilDate()));
+  const [viewDate, setViewDate] = useState(value ? parseLocalDate(value) : parseLocalDate(getBrazilDate()));
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync view date when value changes or when opening
   useEffect(() => {
     if (value) {
-      setViewDate(parseISO(value));
+      setViewDate(parseLocalDate(value));
     }
   }, [value, isOpen]);
 
@@ -104,10 +103,10 @@ export default function CalendarInput({ label, value, onChange, error }: Calenda
           </div>
           <div className="flex flex-col items-start">
             <span className="text-[9px] font-black uppercase text-app-muted tracking-tighter leading-none mb-0.5 opacity-60">
-              {value ? format(parseISO(value), 'MMMM yyyy', { locale: ptBR }) : 'Selecione uma data'}
+              {value ? format(parseLocalDate(value), 'MMMM yyyy', { locale: ptBR }) : 'Selecione uma data'}
             </span>
             <span className="font-sans text-lg text-app-text font-bold tracking-tight">
-              {value ? format(parseISO(value), "dd 'de' MMMM", { locale: ptBR }) : '---'}
+              {value ? format(parseLocalDate(value), "dd 'de' MMMM", { locale: ptBR }) : '---'}
             </span>
           </div>
         </div>
@@ -195,7 +194,7 @@ export default function CalendarInput({ label, value, onChange, error }: Calenda
             <div className="bg-app-bg/50 p-3 border-t border-app-border flex justify-between items-center">
               <button
                 type="button"
-                onClick={() => handleDateSelect(parseISO(getBrazilDate()))}
+                onClick={() => handleDateSelect(parseLocalDate(getBrazilDate()))}
                 className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-app-accent hover:bg-app-accent/5 rounded-lg transition-all"
               >
                 Hoje

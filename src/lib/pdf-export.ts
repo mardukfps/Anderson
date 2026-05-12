@@ -1,8 +1,8 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { OvertimeEntry, AppSettings, EntryType } from '../types';
-import { formatCurrency, getBrazilDate } from './utils';
-import { format, parseISO } from 'date-fns';
+import { formatCurrency, getBrazilDate, parseLocalDate } from './utils';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { calculateSalarySummary } from './calculations';
 
@@ -166,7 +166,7 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
   doc.text('Detalhamento de Registros', 15, vizY + 28);
 
   const tableData = entries.map(entry => [
-    format(parseISO(entry.date), 'dd/MM/yy'),
+    format(parseLocalDate(entry.date), 'dd/MM/yy'),
     entry.type === EntryType.PONTO ? 'PONTO' : 'CARTÃO',
     `${entry.entryTime} - ${entry.exitTime}`,
     `${entry.calculatedHours.toFixed(2)}h`,

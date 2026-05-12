@@ -4,12 +4,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area, PieChart, Pie, Cell, LabelList 
 } from 'recharts';
-import { format, subDays, startOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
+import { format, subDays, startOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { OvertimeEntry, EntryType, AppSettings } from '../types';
 import { calculateEntryPerformance, calculateINSS } from '../lib/calculations';
 import { TrendingUp, Clock, Wallet, Calendar, DollarSign } from 'lucide-react';
-import { cn, formatCurrency, getBrazilDate } from '../lib/utils';
+import { cn, formatCurrency, getBrazilDate, parseLocalDate } from '../lib/utils';
 
 interface TrendsScreenProps {
   entries: OvertimeEntry[];
@@ -20,7 +20,7 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
   const stats = useMemo(() => {
     if (entries.length === 0 && settings.baseSalary <= 0) return null;
 
-    const brazilToday = parseISO(getBrazilDate());
+    const brazilToday = parseLocalDate(getBrazilDate());
     const currentMonth = brazilToday.getMonth();
     const currentYear = brazilToday.getFullYear();
 
@@ -55,7 +55,7 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
     const netBaseSalary = settings.baseSalary - inss;
     const totalExtraMonth = entries
       .filter(e => {
-        const d = parseISO(e.date);
+        const d = parseLocalDate(e.date);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear && e.type === EntryType.PONTO;
       })
       .reduce((acc, e) => acc + e.calculatedValue, 0);
@@ -67,8 +67,8 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
     
     let historyCharts: any[] = [];
     if (sortedDates.length > 0) {
-      const firstDate = parseISO(sortedDates[0]);
-      const lastDate = parseISO(sortedDates[sortedDates.length - 1]);
+      const firstDate = parseLocalDate(sortedDates[0]);
+      const lastDate = parseLocalDate(sortedDates[sortedDates.length - 1]);
       
       const historyData = eachDayOfInterval({
         start: firstDate,
