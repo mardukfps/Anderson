@@ -29,6 +29,8 @@ type Tab = 'dashboard' | 'trends' | 'history' | 'add' | 'settings';
 
 export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
+  
+
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const hash = window.location.hash.replace('#', '') as Tab;
     return (['dashboard', 'trends', 'history', 'add', 'settings'].includes(hash) ? hash : 'dashboard');
