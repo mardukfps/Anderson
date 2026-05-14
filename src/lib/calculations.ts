@@ -36,48 +36,59 @@ export function calculateEntryPerformance(
 }
 
 /**
- * Calculates INSS deduction based on Brazilian progressive table (2024/2025 standard)
+ * Calculates INSS deduction based on Brazilian progressive table (2026 Projection)
+ * Based on projected Minimum Wage of R$ 1.582,00
  */
 export function calculateINSS(salary: number) {
   if (salary <= 0) return 0;
   
-  const ceiling = 7786.02;
+  const sm = 1582.00; // Salário Mínimo 2026
+  const ceiling = 8723.46; // Teto INSS 2026 (Estimated)
   const s = Math.min(salary, ceiling);
   
   let inss = 0;
   
-  // 2024 Progressive Brackets
-  if (s <= 1412.00) {
+  // 2026 Progressive Brackets (Estimated)
+  const b1 = sm;
+  const b2 = 2987.75;
+  const b3 = 4481.63;
+  
+  if (s <= b1) {
     inss = s * 0.075;
-  } else if (s <= 2666.68) {
-    inss = (1412.00 * 0.075) + ((s - 1412.00) * 0.09);
-  } else if (s <= 4000.03) {
-    inss = (1412.00 * 0.075) + ((2666.68 - 1412.00) * 0.09) + ((s - 2666.68) * 0.12);
+  } else if (s <= b2) {
+    inss = (b1 * 0.075) + ((s - b1) * 0.09);
+  } else if (s <= b3) {
+    inss = (b1 * 0.075) + ((b2 - b1) * 0.09) + ((s - b2) * 0.12);
   } else {
-    inss = (1412.00 * 0.075) + ((2666.68 - 1412.00) * 0.09) + ((4000.03 - 2666.68) * 0.12) + ((s - 4000.03) * 0.14);
+    inss = (b1 * 0.075) + ((b2 - b1) * 0.09) + ((b3 - b2) * 0.12) + ((s - b3) * 0.14);
   }
 
-  // Max deduction is capped by the ceiling
-  return Math.min(inss, 908.85);
+  // Max deduction is capped by the ceiling (~R$ 1.018,30)
+  return Math.min(inss, 1018.30);
 }
 
 /**
- * Calculates IRRF (Imposto de Renda) based on Brazilian progressive table
+ * Calculates IRRF (Imposto de Renda) based on Brazilian progressive table (2026 Projection)
+ * Includes progressive brackets and the "simplified deduction" logic
  */
 export function calculateIRRF(grossSalary: number, inssDeduction: number) {
   const taxableBase = grossSalary - inssDeduction;
   
-  if (taxableBase <= 2259.20) return 0;
+  // Proj 2026 Brackets (Exemption follows SM growth or specific laws)
+  // Scaling 2024 table (2259.20 * 1.582/1412)
+  const exemption = 2531.20;
+  
+  if (taxableBase <= exemption) return 0;
   
   let irrf = 0;
-  if (taxableBase <= 2826.65) {
-    irrf = (taxableBase * 0.075) - 169.44;
-  } else if (taxableBase <= 3751.05) {
-    irrf = (taxableBase * 0.15) - 381.44;
-  } else if (taxableBase <= 4664.68) {
-    irrf = (taxableBase * 0.225) - 662.77;
+  if (taxableBase <= 3166.98) {
+    irrf = (taxableBase * 0.075) - 189.84;
+  } else if (taxableBase <= 4202.68) {
+    irrf = (taxableBase * 0.15) - 427.37;
+  } else if (taxableBase <= 5226.31) {
+    irrf = (taxableBase * 0.225) - 742.57;
   } else {
-    irrf = (taxableBase * 0.275) - 896.00;
+    irrf = (taxableBase * 0.275) - 1003.88;
   }
 
   return Math.max(0, irrf);
