@@ -33,7 +33,7 @@ export default function SettingsScreen({
   const [resent, setResent] = useState(false);
   const [baseSalary, setBaseSalary] = useState(settings.baseSalary?.toString() || '0');
   const [monthlyLimit, setMonthlyLimit] = useState(settings.monthlyLimit?.toString() || '40');
-  const [defaultMultiplier, setDefaultMultiplier] = useState<1.0 | 2.0>(settings.defaultMultiplier || 1.0);
+  const [defaultMultiplier, setDefaultMultiplier] = useState<number>(settings.defaultMultiplier || 1.0);
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(settings.theme || 'dark');
   const [saved, setSaved] = useState(false);
@@ -264,7 +264,7 @@ export default function SettingsScreen({
                           : "text-app-muted hover:text-app-text"
                       )}
                     >
-                      50% (1.0x)
+                      1.0x
                     </button>
                     <button
                       type="button"
@@ -276,7 +276,7 @@ export default function SettingsScreen({
                           : "text-app-muted hover:text-app-text"
                       )}
                     >
-                      100% (2.0x)
+                      2.0x
                     </button>
                   </div>
                 </div>

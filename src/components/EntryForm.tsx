@@ -20,7 +20,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
   const [date, setDate] = useState(initialEntry?.date || getBrazilDate());
   const [entryTime, setEntryTime] = useState(initialEntry?.entryTime || '08:00');
   const [exitTime, setExitTime] = useState(initialEntry?.exitTime || '18:00');
-  const [multiplier, setMultiplier] = useState<1.0 | 2.0>(initialEntry?.multiplier || settings.defaultMultiplier || 1.0);
+  const [multiplier, setMultiplier] = useState<number>(initialEntry?.multiplier || settings.defaultMultiplier || 1.0);
   const [notes, setNotes] = useState(initialEntry?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ date?: boolean; entryTime?: boolean; exitTime?: boolean }>({});
@@ -177,7 +177,7 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
                   : "border-app-border bg-app-card text-app-muted hover:border-app-accent/30"
               )}
             >
-              <span className="text-2xl font-bold">50%</span>
+              <span className="text-2xl font-bold">1.0x</span>
               <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">Normal</span>
             </motion.button>
             <motion.button
@@ -191,8 +191,8 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
                   : "border-app-border bg-app-card text-app-muted hover:border-app-accent/30"
               )}
             >
-              <span className="text-2xl font-bold">100%</span>
-              <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">Dobro</span>
+              <span className="text-2xl font-bold">2.0x</span>
+              <span className="text-[10px] uppercase font-heavy tracking-widest opacity-70">100%</span>
             </motion.button>
           </div>
         </div>
@@ -235,12 +235,12 @@ export default function EntryForm({ onSubmit, settings, initialEntry, onCancel }
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
               <span className="px-1.5 py-0.5 rounded-md bg-app-accent/10 text-app-accent text-[9px] font-black uppercase">
-                {multiplier === 1.0 ? 'Hora Extra 50%' : 'Hora Extra 100%'}
+                {multiplier === 1.0 ? 'Hora Normal' : 'Hora Extra 100%'}
               </span>
             </div>
           </div>
           <div className="text-right flex flex-col justify-end">
-            <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Valor Total ({multiplier === 1.0 ? '50%' : '100%'})</span>
+            <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Valor Total ({multiplier === 1.0 ? '1x' : '2x'})</span>
             <div className="text-2xl font-bold text-app-accent leading-none">
               {formatCurrency(stats.calculatedValue)}
             </div>

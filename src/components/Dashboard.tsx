@@ -4,7 +4,6 @@ import { useAuth } from '../hooks/useAuth';
 import { OvertimeEntry, AppSettings, EntryType } from '../types';
 import { formatCurrency, cn, formatExactHours } from '../lib/utils';
 import { Wallet, Clock, CircleCheck, AlertCircle, Mail, TrendingUp, Plus } from 'lucide-react';
-import AdBanner from './AdBanner';
 import Logo from './Logo';
 
 interface DashboardProps {
@@ -217,8 +216,6 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
           </div>
         )}
       </div>
-      
-      <AdBanner />
     </div>
   );
 }

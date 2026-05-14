@@ -10,7 +10,7 @@ export interface OvertimeEntry {
   entryTime: string; // HH:mm
   exitTime: string; // HH:mm
   calculatedHours: number; // decimal
-  multiplier: 1.0 | 2.0;
+  multiplier: number;
   calculatedValue: number;
   notes?: string;
   isNightShift?: boolean;
@@ -23,7 +23,7 @@ export type Theme = 'light' | 'dark' | 'high-contrast' | 'sky' | 'ruby' | 'emera
 export interface AppSettings {
   baseHourlyRate: number;
   monthlyLimit: number;
-  defaultMultiplier: 1.0 | 2.0;
+  defaultMultiplier: number;
   theme: Theme;
   baseSalary: number;
   userId?: string;
@@ -32,7 +32,7 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   baseHourlyRate: 0,
   monthlyLimit: 40,
-  defaultMultiplier: 2.0,
+  defaultMultiplier: 1.5,
   theme: 'dark',
   baseSalary: 0,
 };

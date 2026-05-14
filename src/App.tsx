@@ -452,7 +452,7 @@ export default function App() {
             setEditingEntry(null);
           }} 
           icon={<TrendingUp className="w-5 h-5" />} 
-          label="Gráficos" 
+          label="Insights" 
         />
         
         <div className="flex justify-center">
