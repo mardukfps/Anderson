@@ -9,6 +9,7 @@ import { OvertimeEntry, EntryType, AppSettings } from '../types';
 import { calculateSalarySummary } from '../lib/calculations';
 import { TrendingUp, Clock, DollarSign, ArrowUpRight, Zap, PieChart as PieChartIcon, Info, Wallet, Receipt, ShieldCheck, ArrowRight } from 'lucide-react';
 import { cn, formatCurrency, getBrazilDate, parseLocalDate } from '../lib/utils';
+import AdBanner from './AdBanner';
 
 interface TrendsScreenProps {
   entries: OvertimeEntry[];
@@ -357,6 +358,8 @@ export default function TrendsScreen({ entries, settings }: TrendsScreenProps) {
           </div>
         </motion.div>
       </div>
+
+      <AdBanner />
     </div>
   );
 }
