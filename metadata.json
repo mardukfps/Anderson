@@ -2,5 +2,7 @@
   "name": "Jornada+",
   "description": "Controle inteligente de horas extras com conversão financeira e relatórios PDF.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

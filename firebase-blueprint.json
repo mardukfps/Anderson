@@ -2,7 +2,7 @@
   "entities": {
     "OvertimeEntry": {
       "title": "Overtime Entry",
-      "description": "A record of overtime hours worked.",
+      "description": "A record of extra hours worked by the user",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -11,38 +11,54 @@
         "entryTime": { "type": "string" },
         "exitTime": { "type": "string" },
         "calculatedHours": { "type": "number" },
-        "multiplier": { "type": "number", "enum": [1, 2] },
+        "multiplier": { "type": "number" },
         "calculatedValue": { "type": "number" },
         "notes": { "type": "string" },
         "isNightShift": { "type": "boolean" },
-        "createdAt": { "type": "number" },
-        "userId": { "type": "string" }
+        "nightHours": { "type": "number" },
+        "createdAt": { "type": "number" }
       },
-      "required": ["id", "type", "date", "entryTime", "exitTime", "calculatedHours", "multiplier", "calculatedValue", "createdAt", "userId"]
+      "required": ["id", "type", "date", "entryTime", "exitTime", "calculatedHours", "multiplier", "calculatedValue", "createdAt"]
     },
     "AppSettings": {
       "title": "App Settings",
-      "description": "User preferences and configuration.",
+      "description": "User specific configurations for the application",
       "type": "object",
       "properties": {
+        "userId": { "type": "string" },
         "baseHourlyRate": { "type": "number" },
-        "baseSalary": { "type": "number" },
         "monthlyLimit": { "type": "number" },
-        "defaultMultiplier": { "type": "number", "enum": [1, 2] },
-        "theme": { "type": "string", "enum": ["light", "dark", "high-contrast", "sky", "ruby", "emerald", "amber"] },
-        "userId": { "type": "string" }
+        "defaultMultiplier": { "type": "number" },
+        "theme": { "type": "string" },
+        "baseSalary": { "type": "number" }
       },
-      "required": ["baseHourlyRate", "baseSalary", "monthlyLimit", "defaultMultiplier", "theme", "userId"]
+      "required": ["userId", "baseHourlyRate", "monthlyLimit", "defaultMultiplier", "theme", "baseSalary"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Basic user information for auth consistency",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email", "name", "createdAt"]
     }
   },
   "firestore": {
-    "users/{userId}/entries/{entryId}": {
-      "schema": "OvertimeEntry",
-      "description": "Overtime records for a specific user."
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document"
     },
-    "users/{userId}/settings/config": {
+    "/users/{userId}/entries/{entryId}": {
+      "schema": "OvertimeEntry",
+      "description": "Collection of overtime entries for a specific user"
+    },
+    "/users/{userId}/settings/config": {
       "schema": "AppSettings",
-      "description": "Personal settings for a specific user."
+      "description": "Configuration settings for a specific user"
     }
   }
 }

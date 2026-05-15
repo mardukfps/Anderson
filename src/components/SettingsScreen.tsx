@@ -17,6 +17,7 @@ interface SettingsScreenProps {
   onThemePreview: (theme: string) => void;
   onClearHistory: () => void;
   onLogout: () => Promise<void>;
+  onSaveSuccess?: () => void;
 }
 
 export default function SettingsScreen({ 
@@ -26,6 +27,7 @@ export default function SettingsScreen({
   onThemePreview, 
   onClearHistory, 
   onLogout,
+  onSaveSuccess,
 }: SettingsScreenProps) {
   const { resendVerification } = useAuth();
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
@@ -94,7 +96,13 @@ export default function SettingsScreen({
       
       await onUpdate(updatedSettings);
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      if (onSaveSuccess) {
+        setTimeout(() => {
+          onSaveSuccess();
+        }, 800);
+      } else {
+        setTimeout(() => setSaved(false), 3000);
+      }
     } catch (error: any) {
       alert(`Erro ao salvar configurações: ${error.message || 'Erro desconhecido'}`);
     } finally {

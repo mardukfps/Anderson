@@ -1,20 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 0. Global Safety Net
+    // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // --- Helpers ---
+    // Global hardened helpers
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isVerified() {
+      // Mandate email verification for all write operations
+      return isSignedIn() && request.auth.token.email_verified == true;
     }
-
+    
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -27,54 +28,69 @@ service cloud.firestore {
       return resource.data;
     }
 
-    function isValidUser(data) {
-      return data.keys().hasAll(['email', 'uid', 'name', 'createdAt'])
-        && data.keys().size() == 4
-        && data.email is string && data.email.size() <= 256
-        && data.name is string && data.name.size() <= 256
-        && data.uid == request.auth.uid
-        && data.createdAt is number;
-    }
-
-    // --- Validations ---
-    function isValidEntry(data) {
+    // Entity validation blueprints
+    function isValidOvertimeEntry(data) {
       return data.keys().hasAll(['id', 'type', 'date', 'entryTime', 'exitTime', 'calculatedHours', 'multiplier', 'calculatedValue', 'createdAt', 'userId'])
-        && data.keys().size() <= 12 // Allow optional notes and isNightShift
-        && data.id is string && data.id.size() <= 128
+        && data.keys().size() <= 13
+        && data.id is string
+        && data.userId == request.auth.uid
         && data.type in ['ponto', 'cartao']
         && data.date is string && data.date.size() == 10
-        && data.entryTime is string && data.entryTime.size() == 5
-        && data.exitTime is string && data.exitTime.size() == 5
         && data.calculatedHours is number
-        && data.multiplier in [1, 2]
+        && data.multiplier is number
         && data.calculatedValue is number
-        && data.createdAt is number
-        && data.userId == request.auth.uid;
+        && (data.createdAt is timestamp || data.createdAt is number); // Allow transition
     }
 
-    function isValidSettings(data) {
-      return data.userId == request.auth.uid
+    function isValidAppSettings(data) {
+      return data.keys().hasAll(['baseHourlyRate', 'monthlyLimit', 'defaultMultiplier', 'theme', 'baseSalary', 'userId'])
+        && data.keys().size() == 6
+        && data.userId == request.auth.uid
         && data.baseHourlyRate is number
-        && data.baseSalary is number
         && data.monthlyLimit is number
-        && data.theme is string;
+        && data.defaultMultiplier is number
+        && data.theme is string
+        && data.baseSalary is number;
     }
 
-    // --- Collection Routes ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'name', 'createdAt'])
+        && data.keys().size() == 4
+        && data.uid == request.auth.uid
+        && data.email is string && data.email.size() <= 256
+        && data.name is string && data.name.size() <= 128
+        && (data.createdAt is timestamp || data.createdAt is number);
+    }
+
+    // Path matches
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      
-      match /entries/{entryId} {
-        allow list: if isOwner(userId);
-        allow get: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidEntry(incoming());
-        allow delete: if isOwner(userId);
+      function isOwner() {
+        return isSignedIn() && request.auth.uid == userId;
       }
 
-      match /settings/{document=**} {
-        allow read, write: if isOwner(userId);
+      // Profile access
+      allow get: if isOwner();
+      // Allow profile creation even if not verified yet, to avoid blocking new signups
+      // but only if they are the owner and data is valid
+      allow create: if isOwner() && isValidUser(incoming());
+      allow update: if isOwner() && isVerified() && isValidUser(incoming());
+
+      match /entries/{entryId} {
+        allow get, list: if isOwner();
+        allow create: if isOwner() && isVerified() && isValidId(entryId) && isValidOvertimeEntry(incoming()) 
+          && incoming().createdAt == request.time;
+        allow update: if isOwner() && isVerified() 
+          && isValidOvertimeEntry(incoming())
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt;
+        allow delete: if isOwner() && isVerified();
+      }
+
+      match /settings/config {
+        allow get: if isOwner();
+        allow create, update: if isOwner() && isVerified() && isValidAppSettings(incoming());
+        allow delete: if false;
       }
     }
   }

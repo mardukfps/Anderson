@@ -428,6 +428,7 @@ export default function App() {
                 onThemePreview={(theme) => setPendingTheme(theme)}
                 onClearHistory={clearEntries}
                 onLogout={logout}
+                onSaveSuccess={() => setActiveTab('dashboard')}
               />
             </motion.div>
           )}

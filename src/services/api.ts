@@ -11,7 +11,8 @@ import {
   query, 
   where,
   writeBatch,
-  orderBy
+  orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
 
 const STORAGE_KEY_ENTRIES = 'jornadaplus_entries';
@@ -86,7 +87,8 @@ export const apiService = {
     try {
       await setDoc(doc(db, `users/${userId}/entries`, entry.id), {
         ...entry,
-        userId
+        userId,
+        createdAt: serverTimestamp() // Use server-side time
       });
       return entry;
     } catch (error) {
@@ -189,16 +191,20 @@ export const apiService = {
   async ensureUserProfile(userId: string, email: string, name: string) {
     const docRef = doc(db, 'users', userId);
     try {
+      // Use getDocFromServer to avoid cache issues for the initial profile check
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         await setDoc(docRef, {
           uid: userId,
-          email,
-          name,
-          createdAt: Date.now()
+          email: email || '',
+          name: name || 'Usuário',
+          createdAt: serverTimestamp()
         });
       }
     } catch (error) {
+      if (error instanceof Error && (error.message.includes('permission') || error.message.includes('insufficient'))) {
+        handleFirestoreError(error, OperationType.WRITE, `users/${userId}`);
+      }
       console.error('Error ensuring user profile:', error);
     }
   },

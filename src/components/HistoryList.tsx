@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { OvertimeEntry, EntryType } from '../types';
 import { formatCurrency, cn, formatExactHours, parseLocalDate } from '../lib/utils';
-import AdBanner from './AdBanner';
 import { 
   Trash2, Edit3, Clock, CreditCard, Filter, X, Info, Search, TrendingUp
 } from 'lucide-react';
@@ -318,8 +317,6 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
           ))
         )}
       </div>
-
-      <AdBanner />
     </div>
   );
 }
