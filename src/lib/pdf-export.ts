@@ -30,12 +30,12 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
   doc.setFontSize(26);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Jornada+', 15, 25);
+  doc.text('Hora Certa', 15, 25);
   
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'normal');
-  doc.text('Relatório Consolidado de Jornada Extra', 15, 33);
+  doc.text('Relatório Consolidado de Horas Extras', 15, 33);
   
   doc.setFontSize(8);
   doc.text(`Gerado em: ${brazilTimeStr}`, 195, 25, { align: 'right' });
@@ -209,7 +209,7 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
     doc.line(15, doc.internal.pageSize.height - 15, 195, doc.internal.pageSize.height - 15);
     
     doc.text(
-      `Jornada+ | Controle Inteligente de Horas Extras`,
+      `Hora Certa | Controle Inteligente de Horas Extras`,
       15,
       doc.internal.pageSize.height - 10
     );
@@ -222,6 +222,6 @@ export function generatePDF(entries: OvertimeEntry[], settings: AppSettings) {
     );
   }
 
-  doc.save(`relatorio-jornada-${brazilDateISO}.pdf`);
+  doc.save(`relatorio-horas-extras-${brazilDateISO}.pdf`);
 }
 

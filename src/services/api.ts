@@ -15,8 +15,8 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 
-const STORAGE_KEY_ENTRIES = 'jornadaplus_entries';
-const STORAGE_KEY_SETTINGS = 'jornadaplus_settings';
+const STORAGE_KEY_ENTRIES = 'horacerta_entries';
+const STORAGE_KEY_SETTINGS = 'horacerta_settings';
 
 enum OperationType {
   CREATE = 'create',

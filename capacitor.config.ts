@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.jornadaplus.app',
-  appName: 'Jornada+',
+  appName: 'Horas Certa',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

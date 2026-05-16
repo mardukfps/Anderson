@@ -1,5 +1,5 @@
-// Service Worker for Jornada+ PWA
-const CACHE_NAME = 'jornada-plus-v2';
+// Service Worker for Hora Certa PWA
+const CACHE_NAME = 'hora-certa-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

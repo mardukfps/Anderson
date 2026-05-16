@@ -29,55 +29,44 @@ export default function Logo({ className, size = 48, showText = false, variant =
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
         >
-          {/* Circular background shadow/depth */}
-          <circle 
-            cx="50" 
-            cy="52" 
-            r="44" 
-            className="fill-black/5 dark:fill-white/5"
-          />
-
-          {/* Outer Ring - Journey and Clock concept */}
+          {/* Main Circle - Clock Face */}
           <circle 
             cx="50" 
             cy="50" 
-            r="44" 
+            r="42" 
             stroke="currentColor" 
-            strokeWidth="8" 
-            strokeLinecap="round"
-            strokeDasharray="220 50"
+            strokeWidth="6" 
             className={cn("opacity-20", textColor)}
           />
+
+          {/* Hour markers - Minimalist style */}
+          <line x1="50" y1="18" x2="50" y2="12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className={cn("opacity-30", textColor)} />
+          <line x1="82" y1="50" x2="88" y2="50" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className={cn("opacity-30", textColor)} />
+          <line x1="50" y1="82" x2="50" y2="88" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className={cn("opacity-30", textColor)} />
+          <line x1="18" y1="50" x2="12" y2="50" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className={cn("opacity-30", textColor)} />
+
+          {/* Checkmark Clock Hands - Representing "Certa" (Right/Correct) */}
+          <g transform="translate(50, 50)">
+            {/* The "Check" - short hand pointing down-left, long hand pointing up-right */}
+            <path
+              d="M-15 0 L0 15 L30 -25"
+              stroke="currentColor"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={textColor}
+            />
+          </g>
           
-          {/* Active Arc - Progress */}
-          <path
-            d="M15 75 A44 44 0 0 1 50 6"
-            stroke="currentColor"
-            strokeWidth="10"
-            strokeLinecap="round"
-            className={textColor}
-          />
-
-          {/* Growth Bars - Financial Conversion */}
-          <rect x="30" y="55" width="8" height="15" rx="2" className={cn("fill-current opacity-40", textColor)} />
-          <rect x="46" y="45" width="8" height="25" rx="2" className={cn("fill-current opacity-70", textColor)} />
-          <rect x="62" y="32" width="8" height="38" rx="2" className={cn("fill-current", textColor)} />
-
-          {/* The Plus Branding */}
-          <path 
-            d="M80 10V30M70 20H90" 
-            stroke="currentColor" 
-            strokeWidth="12" 
-            strokeLinecap="round" 
-            className={cn(variant === 'light' ? 'text-white' : 'text-app-accent')} 
-          />
+          {/* Center reflection/point */}
+          <circle cx="50" cy="50" r="3" fill="currentColor" className={textColor} />
         </svg>
       </div>
       
       {showText && (
         <div className="flex items-center">
-          <h1 className={cn("text-2xl font-black tracking-widest uppercase", textColor)}>
-            JORNADA<span className={cn(variant === 'light' ? 'text-white' : 'text-app-accent')}>+</span>
+          <h1 className={cn("text-2xl font-black tracking-tight uppercase", textColor)}>
+            HORAS <span className={cn(variant === 'light' ? 'text-white' : 'text-app-accent')}>CERTA</span>
           </h1>
         </div>
       )}

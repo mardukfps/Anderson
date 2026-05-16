@@ -36,6 +36,15 @@ export default function App() {
     return (['dashboard', 'trends', 'history', 'add', 'settings'].includes(hash) ? hash : 'dashboard');
   });
 
+  // Redirect to dashboard after login
+  const prevUserRef = useRef(user);
+  useEffect(() => {
+    if (!prevUserRef.current && user) {
+      setActiveTab('dashboard');
+    }
+    prevUserRef.current = user;
+  }, [user]);
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as Tab;
