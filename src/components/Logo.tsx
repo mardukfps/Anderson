@@ -66,7 +66,7 @@ export default function Logo({ className, size = 48, showText = false, variant =
       {showText && (
         <div className="flex items-center">
           <h1 className={cn("text-2xl font-black tracking-tight uppercase", textColor)}>
-            HORAS <span className={cn(variant === 'light' ? 'text-white' : 'text-app-accent')}>CERTA</span>
+            HORA <span className={cn(variant === 'light' ? 'text-white' : 'text-app-accent')}>CERTA</span>
           </h1>
         </div>
       )}

@@ -148,7 +148,7 @@ export default function Dashboard({ entries, settings, onNavigateToSettings }: D
             animate={{ opacity: 1, x: 0 }}
             className="text-2xl font-black tracking-tight text-app-text flex items-center gap-2"
           >
-            Sua Horas <span className="text-app-accent">Certa</span>
+            Sua Hora <span className="text-app-accent">Certa</span>
           </motion.h1>
         </div>
         <motion.div

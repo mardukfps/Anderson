@@ -102,7 +102,7 @@ export default function Login() {
         <div className="mb-10 flex flex-col items-center">
           <Logo size={80} className="mb-6" />
           <h1 className="text-2xl font-bold tracking-tight text-app-text">
-            HORAS <span className="text-app-accent">CERTA</span>
+            HORA <span className="text-app-accent">CERTA</span>
           </h1>
           <p className="text-app-muted text-xs font-medium mt-1">Sua gestão de horas extras</p>
         </div>

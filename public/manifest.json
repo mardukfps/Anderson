@@ -1,6 +1,6 @@
 {
-  "name": "Horas Certa",
-  "short_name": "HorasCerta",
+  "name": "Hora Certa",
+  "short_name": "HoraCerta",
   "description": "Controle inteligente de horas extras com conversão financeira e relatórios PDF.",
   "id": "/index.html",
   "start_url": "/",
