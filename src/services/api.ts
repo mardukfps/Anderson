@@ -209,6 +209,44 @@ export const apiService = {
     }
   },
 
+  async updateUserName(userId: string, newName: string) {
+    const docRef = doc(db, 'users', userId);
+    try {
+      await updateDoc(docRef, { 
+        name: newName,
+        updatedAt: serverTimestamp() 
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
+      throw error;
+    }
+  },
+
+  async updateUserPhoto(userId: string, photoURL: string) {
+    const docRef = doc(db, 'users', userId);
+    try {
+      await updateDoc(docRef, { 
+        photoURL,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
+      throw error;
+    }
+  },
+
+  async updatePasswordAudit(userId: string) {
+    const docRef = doc(db, 'users', userId);
+    try {
+      await updateDoc(docRef, { 
+        passwordLastChanged: serverTimestamp(),
+        updatedAt: serverTimestamp() 
+      });
+    } catch (error) {
+      console.error('Error logging password update:', error);
+    }
+  },
+
   clearCache(userId: string) {
     try {
       localStorage.removeItem(`${STORAGE_KEY_ENTRIES}_${userId}`);

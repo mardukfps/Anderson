@@ -68,6 +68,7 @@ export default function App() {
   const [pendingTheme, setPendingTheme] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const isNotVerified = user && !user.emailVerified;
 
   useEffect(() => {
     testConnection();
@@ -316,6 +317,13 @@ export default function App() {
           </p>
         </div>
       )}
+      {isNotVerified && (
+        <div className="w-full bg-amber-500/10 border-b border-amber-500/20 py-2 px-4 text-center sticky top-0 z-[60] backdrop-blur-md">
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+            E-mail não verificado. Você poderá apenas visualizar seus dados. Verifique seu e-mail para salvar registros.
+          </p>
+        </div>
+      )}
       {/* Dynamic Content area */}
       <main className="w-full max-w-lg p-6 md:p-10 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
@@ -354,7 +362,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="flex justify-between items-center mb-10">
+              <div className="flex justify-between items-center mb-8 sticky top-0 bg-app-bg/95 backdrop-blur-md z-50 py-4 -mx-6 md:-mx-10 px-6 md:px-10 border-b border-app-border/40">
                 <div className="space-y-1">
                   <h1 className="text-3xl font-bold tracking-tight text-app-text">Histórico</h1>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-app-muted opacity-60">Seus registros salvos</p>

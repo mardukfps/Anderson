@@ -31,15 +31,15 @@ service cloud.firestore {
     // Entity validation blueprints
     function isValidOvertimeEntry(data) {
       return data.keys().hasAll(['id', 'type', 'date', 'entryTime', 'exitTime', 'calculatedHours', 'multiplier', 'calculatedValue', 'createdAt', 'userId'])
-        && data.keys().size() <= 13
-        && data.id is string
+        && data.keys().size() <= 15 // Allow for future optional fields like 'notes'
+        && data.id is string && data.id.size() <= 128
         && data.userId == request.auth.uid
         && data.type in ['ponto', 'cartao']
         && data.date is string && data.date.size() == 10
         && data.calculatedHours is number
         && data.multiplier is number
         && data.calculatedValue is number
-        && (data.createdAt is timestamp || data.createdAt is number); // Allow transition
+        && (data.createdAt is timestamp || data.createdAt is number);
     }
 
     function isValidAppSettings(data) {
@@ -55,41 +55,72 @@ service cloud.firestore {
 
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'name', 'createdAt'])
-        && data.keys().size() == 4
+        && data.keys().size() <= 8
         && data.uid == request.auth.uid
         && data.email is string && data.email.size() <= 256
         && data.name is string && data.name.size() <= 128
-        && (data.createdAt is timestamp || data.createdAt is number);
+        && (!data.keys().hasAny(['photoURL']) || data.photoURL == null || (data.photoURL is string))
+        && (data.createdAt is timestamp || data.createdAt is number)
+        && (!data.keys().hasAny(['updatedAt']) || data.updatedAt is timestamp || data.updatedAt is number)
+        && (!data.keys().hasAny(['passwordLastChanged']) || data.passwordLastChanged is timestamp || data.passwordLastChanged is number);
     }
 
     // Path matches
     match /users/{userId} {
-      function isOwner() {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      // Profile access
-      allow get: if isOwner();
-      // Allow profile creation even if not verified yet, to avoid blocking new signups
-      // but only if they are the owner and data is valid
-      allow create: if isOwner() && isValidUser(incoming());
-      allow update: if isOwner() && isVerified() && isValidUser(incoming());
+      // Profile access - strictly restricted to owner
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      
+      // Allow profile creation for the authenticated user only
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      
+      // Allow profile updates (name and photoURL)
+      allow update: if isSignedIn() && request.auth.uid == userId 
+        && isValidUser(incoming())
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoURL', 'updatedAt', 'passwordLastChanged'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['photoURL', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['passwordLastChanged', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['name'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['photoURL'])
+        )
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email;
 
       match /entries/{entryId} {
-        allow get, list: if isOwner();
-        allow create: if isOwner() && isVerified() && isValidId(entryId) && isValidOvertimeEntry(incoming()) 
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        
+        allow create: if isSignedIn() && request.auth.uid == userId && isVerified() 
+          && isValidId(entryId) && isValidOvertimeEntry(incoming()) 
           && incoming().createdAt == request.time;
-        allow update: if isOwner() && isVerified() 
+          
+        allow update: if isSignedIn() && request.auth.uid == userId && isVerified() 
           && isValidOvertimeEntry(incoming())
           && incoming().id == existing().id
           && incoming().userId == existing().userId
-          && incoming().createdAt == existing().createdAt;
-        allow delete: if isOwner() && isVerified();
+          && incoming().createdAt == existing().createdAt
+          && (
+            // Action: Standard update (can change most fields)
+            incoming().diff(existing()).affectedKeys().hasAny(['type', 'date', 'entryTime', 'exitTime', 'calculatedHours', 'multiplier', 'calculatedValue', 'notes', 'isNightShift', 'nightHours'])
+            && !incoming().diff(existing()).affectedKeys().hasAny(['id', 'userId', 'createdAt'])
+          );
+          
+        allow delete: if isSignedIn() && request.auth.uid == userId && isVerified();
       }
 
       match /settings/config {
-        allow get: if isOwner();
-        allow create, update: if isOwner() && isVerified() && isValidAppSettings(incoming());
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        
+        allow create: if isSignedIn() && request.auth.uid == userId && isVerified() && isValidAppSettings(incoming());
+        
+        allow update: if isSignedIn() && request.auth.uid == userId && isVerified() 
+          && isValidAppSettings(incoming())
+          && (
+            // Action: Update config
+            incoming().diff(existing()).affectedKeys().hasAny(['baseHourlyRate', 'monthlyLimit', 'defaultMultiplier', 'theme', 'baseSalary'])
+            && !incoming().diff(existing()).affectedKeys().hasAny(['userId'])
+          );
+          
         allow delete: if false;
       }
     }

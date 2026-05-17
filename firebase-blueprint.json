@@ -42,6 +42,7 @@
         "uid": { "type": "string" },
         "email": { "type": "string" },
         "name": { "type": "string" },
+        "photoURL": { "type": "string" },
         "createdAt": { "type": "number" }
       },
       "required": ["uid", "email", "name", "createdAt"]

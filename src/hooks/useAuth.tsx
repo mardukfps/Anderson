@@ -10,14 +10,18 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { doc, onSnapshot as onFirestoreSnapshot } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
+  profile: any | null;
   loading: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   resendVerification: () => Promise<void>;
+  updateUserName: (newName: string) => Promise<void>;
+  updateUserPhoto: (photoURL: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -25,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,12 +38,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.warn('Firebase persistence failed:', err);
     });
 
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      if (!user) {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return unsubAuth;
+  }, []);
+
+  // Profile listener
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubProfile = onFirestoreSnapshot(doc(db, 'users', user.uid), (snapshot) => {
+      if (snapshot.exists()) {
+        setProfile(snapshot.data());
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Profile listener error:', error);
       setLoading(false);
     });
-    return unsub;
-  }, []);
+
+    return unsubProfile;
+  }, [user]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     try {
@@ -72,6 +98,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserName = async (newName: string) => {
+    if (auth.currentUser) {
+      try {
+        // Update Firebase Auth
+        await updateProfile(auth.currentUser, { displayName: newName });
+        
+        // Update Firestore via API
+        const { apiService } = await import('../services/api');
+        await apiService.updateUserName(auth.currentUser.uid, newName);
+        
+        // Force state update in React by cloning the user object
+        setUser({ ...auth.currentUser });
+      } catch (error) {
+        console.error('Error updating user name:', error);
+        throw error;
+      }
+    }
+  };
+
+  const updateUserPhoto = async (photoURL: string) => {
+    if (auth.currentUser) {
+      try {
+        // Update Firebase Auth ONLY if photoURL is short (Firebase Auth has ~2048 chars limit)
+        // Data URLs can be very large, so we check the length.
+        if (photoURL.length < 2000) {
+          await updateProfile(auth.currentUser, { photoURL });
+        }
+        
+        // Update Firestore via API (Firestore has 1MB limit)
+        const { apiService } = await import('../services/api');
+        await apiService.updateUserPhoto(auth.currentUser.uid, photoURL);
+        
+        // We don't need to manually update state here because the onFirestoreSnapshot listener 
+        // will handle it automatically and predictably.
+      } catch (error) {
+        console.error('Error updating user photo:', error);
+        throw error;
+      }
+    }
+  };
+
   const logout = async () => {
     try {
       const userId = auth.currentUser?.uid;
@@ -87,7 +154,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, signUpWithEmail, resendVerification, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile,
+      loading, 
+      signInWithEmail, 
+      signUpWithEmail, 
+      resendVerification, 
+      updateUserName,
+      updateUserPhoto,
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

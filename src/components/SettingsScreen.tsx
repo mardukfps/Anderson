@@ -5,10 +5,17 @@ import { AppSettings } from '../types';
 import { 
   Settings as SettingsIcon, DollarSign, Target, Save, Clock, Trash2, 
   Palette, Moon, Sun, Monitor, LogOut, User as UserIcon,
-  ShieldCheck, EyeOff, Eye, Camera, Edit3, Percent
+  Cloud, Heart, Leaf, Flame,
+  ShieldCheck, EyeOff, Eye, Camera, Edit3, Percent, Settings2,
+  Lock, Key, Shield, Loader2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { User } from 'firebase/auth';
+import { 
+  User, updatePassword, reauthenticateWithCredential, 
+  EmailAuthProvider, sendPasswordResetEmail 
+} from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import ProfileModal from './ProfileModal';
 
 interface SettingsScreenProps {
   settings: AppSettings;
@@ -29,7 +36,7 @@ export default function SettingsScreen({
   onLogout,
   onSaveSuccess,
 }: SettingsScreenProps) {
-  const { resendVerification } = useAuth();
+  const { profile, resendVerification } = useAuth();
   const [baseHourlyRate, setBaseHourlyRate] = useState(settings.baseHourlyRate?.toString() || '0');
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
@@ -41,15 +48,22 @@ export default function SettingsScreen({
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'geral' | 'temas'>('geral');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [globalMessage, setGlobalMessage] = useState<string | null>(null);
+
+  const handleProfileSuccess = (message: string) => {
+    setGlobalMessage(message);
+    setTimeout(() => setGlobalMessage(null), 4000);
+  };
 
   const themes = [
-    { id: 'light', label: 'Claro', icon: Sun, color: '#F8F9FA' },
-    { id: 'dark', label: 'Escuro', icon: Moon, color: '#0A0A0A' },
-    { id: 'high-contrast', label: 'Contraste', icon: Monitor, color: '#000000' },
-    { id: 'sky', label: 'Céu Noturno', icon: Palette, color: '#0F172A' },
-    { id: 'ruby', label: 'Rubi', icon: Palette, color: '#1A0B0B' },
-    { id: 'emerald', label: 'Esmeralda', icon: Palette, color: '#061A13' },
-    { id: 'amber', label: 'Âmbar', icon: Palette, color: '#1C1206' },
+    { id: 'light', label: 'Claro', icon: Sun, color: '#F59E0B' },
+    { id: 'dark', label: 'Escuro', icon: Moon, color: '#818CF8' },
+    { id: 'high-contrast', label: 'Contraste', icon: Monitor, color: '#FFFFFF' },
+    { id: 'sky', label: 'Céu Noturno', icon: Cloud, color: '#38BDF8' },
+    { id: 'ruby', label: 'Rubi', icon: Heart, color: '#F87171' },
+    { id: 'emerald', label: 'Esmeralda', icon: Leaf, color: '#34D399' },
+    { id: 'amber', label: 'Âmbar', icon: Flame, color: '#FBBF24' },
   ];
 
   // Check if there are unsaved changes
@@ -137,52 +151,57 @@ export default function SettingsScreen({
   };
 
   return (
-    <div className="space-y-6 pb-12 text-left">
-      {/* Profile Section */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-app-card p-6 rounded-3xl flex items-center gap-4 shadow-sm border border-app-border overflow-hidden relative"
-      >
-        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-app-bg flex items-center justify-center border border-app-border shadow-inner">
-          <UserIcon className="w-8 h-8 text-app-muted" />
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <h2 className="font-black text-lg tracking-tight truncate text-app-text">
-            {user.displayName || 'Usuário'}
-          </h2>
-          <p className="text-xs font-bold text-app-muted truncate uppercase tracking-widest opacity-60">
-            {user.email}
-          </p>
-          {user.providerData.some(p => p.providerId === 'password') && (
-            <div className="flex items-center gap-2 mt-1">
-              <span className={cn(
-                "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
-                user.emailVerified ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
-              )}>
-                {user.emailVerified ? 'E-mail Verificado' : 'E-mail Pendente'}
-              </span>
+    <div className="space-y-6 pb-12 text-left relative min-h-screen">
+      {/* Absolute Header Actions (Top Right) */}
+      <div className="absolute top-0 right-0 flex gap-2 z-20">
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: 15 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsProfileOpen(true)}
+            className="p-3.5 rounded-2xl bg-app-card border border-app-border text-app-accent hover:bg-app-accent hover:text-white transition-all shadow-lg group"
+            title="Configurações de Perfil"
+          >
+            <Settings2 className="w-5 h-5 transition-transform group-hover:rotate-45" />
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="p-3.5 rounded-2xl bg-app-card border border-app-border text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-lg group"
+            title="Sair da conta"
+          >
+            <LogOut className={cn("w-5 h-5 transition-transform group-hover:translate-x-0.5", isLoggingOut && "animate-pulse")} />
+          </motion.button>
+      </div>
+
+      <AnimatePresence>
+        {globalMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xs px-4"
+          >
+            <div className="bg-emerald-500 text-white p-4 rounded-2xl shadow-xl flex items-center gap-3 border-2 border-white/20">
+              <ShieldCheck className="w-6 h-6 shrink-0" />
+              <div className="flex-1">
+                <p className="text-[10px] font-black uppercase tracking-wider leading-tight">{globalMessage}</p>
+              </div>
             </div>
-          )}
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="p-3 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5 group"
-          title="Sair da conta"
-        >
-          <LogOut className={cn("w-5 h-5 transition-transform group-hover:translate-x-0.5", isLoggingOut && "animate-pulse")} />
-        </motion.button>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="pt-10" /> {/* Spacer for the top right buttons now that title is gone */}
 
       {/* Tabs */}
-      <div className="flex p-1 bg-app-card rounded-2xl border border-app-border overflow-x-auto no-scrollbar">
+      <div className="flex p-1 bg-app-card rounded-2xl border border-app-border">
         <button
           onClick={() => setActiveTab('geral')}
           className={cn(
-            "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+            "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
             activeTab === 'geral' 
               ? "bg-app-accent text-app-accent-text shadow-sm" 
               : "text-app-muted hover:bg-app-bg"
@@ -194,7 +213,7 @@ export default function SettingsScreen({
         <button
           onClick={() => setActiveTab('temas')}
           className={cn(
-            "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+            "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
             activeTab === 'temas' 
               ? "bg-app-accent text-app-accent-text shadow-sm" 
               : "text-app-muted hover:bg-app-bg"
@@ -212,18 +231,57 @@ export default function SettingsScreen({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
             className="space-y-6"
           >
+            {/* Profile Section */}
+            <div 
+              onClick={() => setIsProfileOpen(true)}
+              className="bg-app-card p-6 rounded-[2rem] flex items-center gap-5 shadow-sm border border-app-border overflow-hidden relative group cursor-pointer active:scale-[0.98] transition-transform"
+            >
+              <div className="relative">
+                <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden bg-app-bg flex items-center justify-center border border-app-border shadow-inner transition-transform group-hover:scale-105">
+                  {profile?.photoURL || user.photoURL ? (
+                    <img src={profile?.photoURL || user.photoURL} alt="Perfil" className="w-full h-full object-cover" />
+                  ) : (
+                    <UserIcon className="w-10 h-10 text-app-muted/20" />
+                  )}
+                </div>
+                {!user.emailVerified && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-app-card" />
+                )}
+              </div>
+              
+              <div className="flex-1 overflow-hidden">
+                <h2 className="font-black text-xl tracking-tight truncate text-app-text">
+                  {profile?.name || user.displayName || 'Usuário'}
+                </h2>
+                <p className="text-xs font-bold text-app-muted truncate uppercase tracking-widest opacity-60">
+                  {user.email}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={cn(
+                    "text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border",
+                    user.emailVerified 
+                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                      : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  )}>
+                    {user.emailVerified ? 'CONTA VERIFICADA' : 'AGUARDANDO VERIFICAÇÃO'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSave} className="space-y-6">
               <div className="bg-app-card p-6 rounded-3xl space-y-6 shadow-sm border border-app-border">
                 <div className="flex justify-between items-center border-b border-app-border pb-2">
-                  <h3 className="text-sm font-bold text-app-text">Finanças</h3>
+                  <h3 className="text-sm font-bold text-app-text flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-emerald-500" /> Finanças
+                  </h3>
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
-                    <DollarSign className="w-3 h-3" /> Salário Base (R$)
+                    Salário Base (R$)
                   </label>
                   <input 
                     type="text" 
@@ -235,7 +293,7 @@ export default function SettingsScreen({
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
-                    <Clock className="w-3 h-3" /> Valor da Hora Base (R$)
+                    Valor da Hora Base (R$)
                   </label>
                   <input 
                     type="text" 
@@ -247,7 +305,7 @@ export default function SettingsScreen({
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
-                    <Target className="w-3 h-3" /> Limite Mensal (Horas)
+                    Limite Mensal (Horas)
                   </label>
                   <input 
                     type="text" 
@@ -259,7 +317,7 @@ export default function SettingsScreen({
 
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-app-muted uppercase tracking-widest flex items-center gap-2">
-                    <Percent className="w-3 h-3" /> Multiplicador Padrão
+                    Multiplicador Padrão
                   </label>
                   <div className="flex bg-app-bg p-1 rounded-2xl border border-app-border">
                     <button
@@ -292,7 +350,7 @@ export default function SettingsScreen({
 
               <div className="bg-app-card p-6 rounded-3xl space-y-4 shadow-sm border border-app-border">
                 <div className="flex justify-between items-center border-b border-app-border pb-2 mb-2">
-                  <h3 className="text-sm font-bold text-app-text">Dados</h3>
+                  <h3 className="text-sm font-bold text-app-text">Dados & Segurança</h3>
                 </div>
 
                 <button
@@ -316,7 +374,7 @@ export default function SettingsScreen({
                     saved ? "bg-emerald-500 text-white" : "bg-app-accent text-app-accent-text"
                   )}
                 >
-                  {saved ? "Salvo!" : isSaving ? "Salvando..." : <><Save className="w-6 h-6" /> Salvar Preferências</>}
+                  {saved ? "Configurações Salvas!" : isSaving ? "Salvando..." : <><Save className="w-6 h-6" /> Salvar Preferências</>}
                 </motion.button>
               )}
             </form>
@@ -327,17 +385,16 @@ export default function SettingsScreen({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <div className="bg-app-card p-6 rounded-3xl shadow-sm border border-app-border">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="bg-app-card p-6 rounded-3xl shadow-sm border border-app-border space-y-6">
+              <div className="flex items-center gap-3 mb-2 border-b border-app-border pb-2">
                 <div className="p-2 rounded-xl bg-app-accent/10 text-app-accent">
                   <Palette className="w-5 h-5" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-sm font-bold text-app-text">Personalização</h3>
-                  <p className="text-[10px] text-app-muted font-bold uppercase tracking-widest">Escolha a aparência do app</p>
+                  <p className="text-[10px] text-app-muted font-bold uppercase tracking-widest">Temas do Sistema</p>
                 </div>
               </div>
 
@@ -345,6 +402,7 @@ export default function SettingsScreen({
                 {themes.map((t) => (
                   <button
                     key={t.id}
+                    type="button"
                     onClick={() => handleThemeSelect(t.id)}
                     className={cn(
                       "group relative flex items-center justify-between p-4 rounded-2xl border transition-all text-left",
@@ -355,17 +413,24 @@ export default function SettingsScreen({
                   >
                     <div className="flex items-center gap-4">
                       <div 
-                        className="w-12 h-12 rounded-xl border border-white/20 shadow-inner flex items-center justify-center overflow-hidden"
-                        style={{ backgroundColor: t.color }}
+                        className="w-12 h-12 rounded-xl border border-white/10 shadow-inner flex items-center justify-center overflow-hidden"
+                        style={{ backgroundColor: `${t.color}15` }}
                       >
-                        <t.icon className={cn("w-5 h-5", theme === t.id ? "text-app-accent" : "text-app-muted")} />
+                        <t.icon 
+                          className="w-5 h-5 transition-colors" 
+                          style={{ color: t.color }}
+                        />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-app-text">{t.label}</span>
+                          <div 
+                            className="w-3 h-3 rounded-full border border-app-border shadow-sm" 
+                            style={{ backgroundColor: t.color }}
+                          />
                         </div>
                         <p className="text-[10px] font-bold text-app-muted opacity-60 uppercase tracking-widest">
-                          Toque para aplicar
+                          Toque para visualizar
                         </p>
                       </div>
                     </div>
@@ -376,22 +441,30 @@ export default function SettingsScreen({
                 ))}
               </div>
 
-              <button
-                onClick={() => handleSave()}
-                disabled={!hasChanges || isSaving}
-                className={cn(
-                  "w-full mt-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                  hasChanges 
-                    ? "bg-app-accent text-app-accent-text" 
-                    : "bg-app-muted/10 text-app-muted cursor-not-allowed"
-                )}
-              >
-                {saved ? "Aplicado!" : "Aplicar Mudanças"}
-              </button>
+              {(hasChanges || isSaving || saved) && (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className={cn(
+                    "w-full py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg flex items-center justify-center gap-3 mt-4",
+                    saved ? "bg-emerald-500 text-white" : "bg-app-accent text-app-accent-text"
+                  )}
+                >
+                  {saved ? "Tema Aplicado!" : isSaving ? "Aplicando..." : "Confirmar Alterações de Tema"}
+                </button>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ProfileModal 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+        onUpdateSuccess={handleProfileSuccess}
+        user={user} 
+      />
     </div>
   );
 }

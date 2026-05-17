@@ -81,8 +81,8 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Header with Search & Filter Toggle */}
-      <div className="flex flex-col gap-4">
+      {/* Header with Search & Filter Toggle - Sticky */}
+      <div className="flex flex-col gap-4 sticky top-[84px] bg-app-bg/95 backdrop-blur-md z-40 pt-4 pb-4 -mx-6 md:-mx-10 px-6 md:px-10 border-b border-app-border/40">
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-app-muted opacity-40" />
@@ -178,8 +178,8 @@ export default function HistoryList({ entries, onDelete, onEdit }: HistoryListPr
               transition={{ delay: groupIndex * 0.1 }}
               className="space-y-4"
             >
-              {/* Month Header Section */}
-              <div className="flex items-end justify-between px-2 pt-2 border-b border-app-border/40 pb-2">
+              {/* Month Header Section - Sticky */}
+              <div className="flex items-end justify-between pt-4 border-b border-app-border/40 pb-2 sticky top-[156px] bg-app-bg/95 backdrop-blur-md z-30 -mx-6 md:-mx-10 px-6 md:px-10 rounded-b-xl">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-app-accent uppercase tracking-[0.2em] mb-1">Período</span>
                   <h3 className="text-lg font-black text-app-text tracking-tighter">

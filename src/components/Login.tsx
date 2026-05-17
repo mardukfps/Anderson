@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
-import { Chrome, AlertCircle, Mail, Lock, User, Loader2, ArrowRight } from 'lucide-react';
+import { Chrome, AlertCircle, Mail, Lock, User, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Logo from './Logo';
+import { auth } from '../lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 type AuthMode = 'login' | 'signup';
 
@@ -13,6 +15,7 @@ export default function Login() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState<React.ReactNode | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -21,6 +24,28 @@ export default function Login() {
     if (authMode === 'signup' && pass.length < 8) return 'A senha deve ter no mínimo 8 caracteres';
     if (!pass) return 'A senha é obrigatória';
     return null;
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Por favor, informe seu e-mail no campo acima primeiro');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setSuccess('E-mail de redefinição enviado! Verifique sua caixa de entrada.');
+    } catch (err: any) {
+      console.error('Reset error:', err);
+      let msg = 'Erro ao enviar e-mail';
+      if (err.code === 'auth/user-not-found') msg = 'E-mail não encontrado';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,14 +192,33 @@ export default function Login() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-app-muted" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Sua senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full bg-app-bg border border-app-border focus:border-app-accent rounded-2xl py-4 pl-12 pr-4 text-sm font-medium outline-none transition-all"
+                    className="w-full bg-app-bg border border-app-border focus:border-app-accent rounded-2xl py-4 pl-12 pr-12 text-sm font-medium outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
+
+                {authMode === 'login' && (
+                  <div className="flex justify-end pr-2">
+                    <button 
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-[10px] font-black uppercase tracking-widest text-app-accent hover:opacity-80 transition-all"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
 
