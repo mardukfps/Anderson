@@ -20,6 +20,11 @@ export default function Login() {
   const [error, setError] = useState<React.ReactNode | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const validateEmail = (emailStr: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(emailStr.toLowerCase());
+  };
+
   const validatePassword = (pass: string) => {
     if (authMode === 'signup' && pass.length < 8) return 'A senha deve ter no mínimo 8 caracteres';
     if (!pass) return 'A senha é obrigatória';
@@ -29,6 +34,11 @@ export default function Login() {
   const handleForgotPassword = async () => {
     if (!email) {
       setError('Por favor, informe seu e-mail no campo acima primeiro');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      setError('Por favor, informe um formato de e-mail válido');
       return;
     }
     
@@ -52,6 +62,11 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+
+    if (!validateEmail(email)) {
+      setError('Formato de e-mail inválido. Ex: nome@email.com');
+      return;
+    }
 
     const passError = validatePassword(password);
     if (passError) {

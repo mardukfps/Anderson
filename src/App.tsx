@@ -7,7 +7,8 @@ import {
   Settings as SettingsIcon,
   Download,
   TrendingUp,
-  Trash2
+  Trash2,
+  Check
 } from 'lucide-react';
 import { onSnapshot, collection, doc, query, orderBy } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -68,6 +69,7 @@ export default function App() {
   const [pendingTheme, setPendingTheme] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showSuccess, setShowSuccess] = useState(false);
   const isNotVerified = user && !user.emailVerified;
 
   useEffect(() => {
@@ -183,7 +185,11 @@ export default function App() {
     if (!user) return;
     try {
       await apiService.addEntry(user.uid, entry);
-      setActiveTab('history');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setActiveTab('history');
+      }, 1500);
     } catch (error) {
       console.error('Failed to add entry:', error);
       setModalConfig({
@@ -202,7 +208,11 @@ export default function App() {
     try {
       await apiService.updateEntry(user.uid, updatedEntry.id, updatedEntry);
       setEditingEntry(null);
-      setActiveTab('history');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setActiveTab('history');
+      }, 1500);
     } catch (error) {
       console.error('Failed to update entry:', error);
       setModalConfig({
@@ -519,6 +529,44 @@ export default function App() {
           Desenvolvido por Anderson Silva
         </p>
       </footer>
+
+      {/* Success Feedback Overlay */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-app-bg/80 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              className="bg-app-card p-8 rounded-[2.5rem] border border-app-border shadow-2xl flex flex-col items-center gap-4 text-center max-w-[200px]"
+            >
+              <div className="w-16 h-16 rounded-full bg-app-accent/20 flex items-center justify-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 20, 
+                    delay: 0.2 
+                  }}
+                >
+                  <Check className="w-8 h-8 text-app-accent stroke-[3]" />
+                </motion.div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-black uppercase tracking-tighter text-app-text">Sucesso!</p>
+                <p className="text-[10px] font-bold text-app-muted uppercase tracking-[0.1em]">Registro salvo</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Custom Confirmation Modal */}
       <ConfirmationModal 
